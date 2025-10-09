@@ -663,11 +663,11 @@ export namespace ConfigKey {
 		export const InlineEditsProviderId = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.providerId', undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsHideInternalInterface = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.hideInternalInterface', vBoolean(), false, INTERNAL_RESTRICTED);
 		export const InlineEditsLogCancelledRequests = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.logCancelledRequests', vBoolean(), false, INTERNAL_RESTRICTED);
-		export const InlineEditsUnification = defineExpSetting<boolean>('chat.advanced.inlineEdits.unification', false, INTERNAL_RESTRICTED);
-		export const InlineEditsXtabProviderUrl = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.url', vString(), undefined, INTERNAL_RESTRICTED);
-		export const InlineEditsXtabProviderApiKey = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.apiKey', vString(), undefined, INTERNAL_RESTRICTED);
+		export const InlineEditsUnification = defineExpSetting<boolean>('chat.advanced.inlineEdits.unification', true, INTERNAL_RESTRICTED);
+		export const InlineEditsXtabProviderUrl = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.url', vString(), "https://api.deepseek.com/chat/completions", INTERNAL_RESTRICTED);
+		export const InlineEditsXtabProviderApiKey = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.apiKey', vString(), "todo", INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderModelConfiguration = defineValidatedSetting<xtabPromptOptions.ModelConfiguration | undefined>('chat.advanced.inlineEdits.xtabProvider.modelConfiguration', xtabPromptOptions.MODEL_CONFIGURATION_VALIDATOR, undefined, INTERNAL_RESTRICTED);
-		export const InlineEditsXtabProviderModelName = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.modelName', undefined, INTERNAL_RESTRICTED);
+		export const InlineEditsXtabProviderModelName = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.modelName', "deepseek-coder", INTERNAL_RESTRICTED);
 		export const InlineEditsInlineCompletionsEnabled = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.inlineCompletions.enabled', vBoolean(), true, INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderUsePrediction = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.xtabProvider.usePrediction', vBoolean(), true, INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderUseVaryingLinesAbove = defineExpSetting<boolean | undefined>('chat.advanced.inlineEdits.xtabProvider.useVaryingLinesAbove', undefined, INTERNAL_RESTRICTED);

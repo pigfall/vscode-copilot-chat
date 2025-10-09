@@ -72,8 +72,7 @@ import { IRemoteRepositoriesService, RemoteRepositoriesService } from '../../../
 import { IReviewService } from '../../../platform/review/common/reviewService';
 import { ReviewServiceImpl } from '../../../platform/review/vscode/reviewServiceImpl';
 import { ISimulationTestContext, NulSimulationTestContext } from '../../../platform/simulationTestContext/common/simulationTestContext';
-import { ISnippyService } from '../../../platform/snippy/common/snippyService';
-import { SnippyService } from '../../../platform/snippy/common/snippyServiceImpl';
+import { ISnippyService, NullSnippyService } from '../../../platform/snippy/common/snippyService';
 import { ISurveyService } from '../../../platform/survey/common/surveyService';
 import { SurveyService } from '../../../platform/survey/vscode/surveyServiceImpl';
 import { ITabsAndEditorsService } from '../../../platform/tabs/common/tabsAndEditorsService';
@@ -164,7 +163,12 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 	builder.define(IEditSurvivalTrackerService, new SyncDescriptor(EditSurvivalTrackerService));
 	builder.define(IPromptPathRepresentationService, new SyncDescriptor(PromptPathRepresentationService));
 	builder.define(IReleaseNotesService, new SyncDescriptor(ReleaseNotesService));
-	builder.define(ISnippyService, new SyncDescriptor(SnippyService));
+	// TODO we need to mock the api:
+	// 	https://origin-tracker.individual.githubcopilot.com/twirp/github.snippy.v1.SnippyAPI/Match
+	// The api is for supporting better inline completion.
+	// Without it, the inline completion also works.
+	//builder.define(ISnippyService, new SyncDescriptor(SnippyService));
+	builder.define(ISnippyService, new SyncDescriptor(NullSnippyService));
 	builder.define(IInteractiveSessionService, new InteractiveSessionServiceImpl());
 	builder.define(IAuthenticationChatUpgradeService, new SyncDescriptor(AuthenticationChatUpgradeService));
 	builder.define(IEmbeddingsComputer, new SyncDescriptor(RemoteEmbeddingsComputer));

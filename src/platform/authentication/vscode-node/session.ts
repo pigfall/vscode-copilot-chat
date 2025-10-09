@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { AuthenticationGetSessionOptions, AuthenticationSession, AuthenticationSessionsChangeEvent, authentication } from 'vscode';
+import { mixin } from '../../../util/vs/base/common/objects';
 import { URI } from '../../../util/vs/base/common/uri';
 import { AuthPermissionMode, AuthProviderId, ConfigKey, IConfigurationService } from '../../configuration/common/configurationService';
-import { GITHUB_SCOPE_ALIGNED, GITHUB_SCOPE_READ_USER, GITHUB_SCOPE_USER_EMAIL, MinimalModeError } from '../common/authentication';
-import { mixin } from '../../../util/vs/base/common/objects';
+import { GITHUB_SCOPE_ALIGNED, MinimalModeError } from '../common/authentication';
 
 export const SESSION_LOGIN_MESSAGE = 'You are not signed in to GitHub. Please sign in to use Copilot.';
 // These types are subsets of the "real" types AuthenticationSessionAccountInformation and
@@ -62,40 +62,22 @@ async function getAuthSession(providerId: string, defaultScopes: string[], getSi
 	return await authentication.getSession(providerId, defaultScopes, options);
 }
 
-/**
- * Cast a wide net to get a session with any of the scopes that Copilot needs.
- * @param configurationService for determining the auth provider
- * @returns an auth session with any of the scopes that Copilot needs, or undefined if none is found
- * @deprecated use `IAuthenticationService` instead
- */
 export function getAnyAuthSession(configurationService: IConfigurationService, options?: AuthenticationGetSessionOptions): Promise<AuthenticationSession | undefined> {
-	const providerId = authProviderId(configurationService);
-
-	return getAuthSession(
-		providerId,
-		GITHUB_SCOPE_USER_EMAIL,
-		async () => {
-			// Ask for aligned scopes first, since that's what we want to use going forward.
-			if (configurationService.getConfig(ConfigKey.Shared.AuthPermissions) !== AuthPermissionMode.Minimal) {
-				const permissive = await authentication.getSession(providerId, GITHUB_SCOPE_ALIGNED, { silent: true });
-				if (permissive) {
-					return permissive;
-				}
-			}
-			const minimal = await authentication.getSession(providerId, GITHUB_SCOPE_USER_EMAIL, { silent: true });
-			if (minimal) {
-				return minimal;
-			}
-			// This is what Completions extension use to ask for and is here mostly for backwards compatibility.
-			const fallback = await authentication.getSession(providerId, GITHUB_SCOPE_READ_USER, { silent: true });
-			if (fallback) {
-				return fallback;
-			}
-			return undefined;
-		},
-		options
+	// When get github authentication,
+	// the extension uses the vscode builtin authentication flow
+	// We can not modify the url of the request in this extension.
+	// So we directly mock the response at this extension.
+	return Promise.resolve(
+		{
+			accessToken: "mocked",
+			account: { id: "mocked", label: "mocked" },
+			id: "mocked",
+			scopes: [],
+		}
 	);
+
 }
+
 
 /**
  * Get a session with an access token that has the same scopes as other GitHub extensions like GitHub Pull Requests.

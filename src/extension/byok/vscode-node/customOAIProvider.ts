@@ -135,6 +135,9 @@ export class CustomOAIBYOKModelProvider implements BYOKModelProvider<CustomOAIMo
 				editTools: capabilities.editTools
 			},
 			thinking: capabilities.thinking || false,
+			// There is some bug that lead the custom model not shows in the model picker.
+			// So we force the custome model to be selectable in the model picker.
+			isUserSelectable: true,
 		};
 		return baseInfo;
 	}
