@@ -37,7 +37,7 @@ export function resolveCustomOAIUrl(modelId: string, url: string): string {
 	return `${url}/v1/chat/completions`;
 }
 
-interface CustomOAIModelInfo extends LanguageModelChatInformation {
+export interface CustomOAIModelInfo extends LanguageModelChatInformation {
 	url: string;
 	thinking: boolean;
 }
