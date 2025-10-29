@@ -243,6 +243,7 @@ async function handleError(
 	telemetryService.sendGHTelemetryEvent('request.shownWarning', telemetryData.properties, telemetryData.measurements);
 
 	const text = await response.text();
+	logService.error(`Request error: ${text}`);
 	let jsonData: Record<string, any> | undefined;
 	try {
 		jsonData = JSON.parse(text);
