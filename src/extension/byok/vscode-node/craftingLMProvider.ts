@@ -51,7 +51,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			const response = await fetch(
 				modelAPIUrl,
 				{
-					method: "POST",
+					method: "GET",
 					headers: {
 						'Authroization': `Bearer ${this.token}`,
 					}
