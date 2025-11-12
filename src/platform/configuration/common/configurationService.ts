@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type { ConfigurationChangeEvent, ConfigurationScope } from 'vscode';
+import { craftingServerBaseAddress } from '../../../util/common/crafting';
 import { createServiceIdentifier } from '../../../util/common/services';
 import { BugIndicatingError } from '../../../util/vs/base/common/errors';
 import { Emitter, Event } from '../../../util/vs/base/common/event';
@@ -578,11 +579,11 @@ export namespace ConfigKey {
 	*/
 	export namespace Shared {
 		/** Allows for overriding the base domain we use for making requests to the CAPI. This helps CAPI devs develop against a local instance. */
-		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', undefined, INTERNAL);
-		export const DebugOverrideCAPIUrl = defineSetting<string | undefined>('advanced.debug.overrideCapiUrl', undefined, INTERNAL);
+		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', "http://proxy.individual.githubcopilot.com." + craftingServerBaseAddress, INTERNAL); // TODO define copilot.llm.g.sandbox as const.
+		export const DebugOverrideCAPIUrl = defineSetting<string | undefined>('advanced.debug.overrideCapiUrl', "http://api.githubcopilot.com." + craftingServerBaseAddress, INTERNAL);
 		export const DebugUseNodeFetchFetcher = defineSetting('advanced.debug.useNodeFetchFetcher', true);
 		export const DebugUseNodeFetcher = defineSetting('advanced.debug.useNodeFetcher', false);
-		export const DebugUseElectronFetcher = defineSetting('advanced.debug.useElectronFetcher', true);
+		export const DebugUseElectronFetcher = defineSetting('advanced.debug.useElectronFetcher', false);
 		export const AuthProvider = defineSetting<AuthProviderId>('advanced.authProvider', AuthProviderId.GitHub);
 		export const AuthPermissions = defineSetting<AuthPermissionMode>('advanced.authPermissions', AuthPermissionMode.Default);
 		export const Enable = defineSetting<{ [key: string]: boolean }>('enable', {
@@ -647,7 +648,7 @@ export namespace ConfigKey {
 		export const InlineEditsYieldToCopilot = defineExpSetting<boolean>('chat.advanced.inlineEdits.yieldToCopilot', false, INTERNAL_RESTRICTED);
 		export const InlineEditsExcludedProviders = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.excludedProviders', undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsEnableCompletionsProvider = defineExpSetting<boolean>('chat.advanced.inlineEdits.completionsProvider.enabled', false, INTERNAL_RESTRICTED);
-		export const InlineEditsEnableGhCompletionsProvider = defineExpSetting<boolean>('chat.advanced.inlineEdits.githubCompletionsProvider.enabled', false, INTERNAL_RESTRICTED);
+		export const InlineEditsEnableGhCompletionsProvider = defineExpSetting<boolean>('chat.advanced.inlineEdits.githubCompletionsProvider.enabled', true, INTERNAL_RESTRICTED);
 		export const InlineEditsCompletionsUrl = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.completionsProvider.url', undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsLogContextRecorderEnabled = defineSetting('chat.advanced.inlineEdits.logContextRecorder.enabled', false, INTERNAL_RESTRICTED);
 		export const InlineEditsDebounce = defineExpSetting<number>('chat.advanced.inlineEdits.debounce', 200, INTERNAL_RESTRICTED);
@@ -660,7 +661,7 @@ export namespace ConfigKey {
 		export const InlineEditsProviderId = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.providerId', undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsHideInternalInterface = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.hideInternalInterface', vBoolean(), false, INTERNAL_RESTRICTED);
 		export const InlineEditsLogCancelledRequests = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.logCancelledRequests', vBoolean(), false, INTERNAL_RESTRICTED);
-		export const InlineEditsUnification = defineExpSetting<boolean>('chat.advanced.inlineEdits.unification', false, INTERNAL_RESTRICTED);
+		export const InlineEditsUnification = defineExpSetting<boolean>('chat.advanced.inlineEdits.unification', true, INTERNAL_RESTRICTED); // This will enable the next edit suggestion.
 		export const InlineEditsTriggerOnEditorChangeAfterSeconds = defineExpSetting<number | undefined>('chat.advanced.inlineEdits.triggerOnEditorChangeAfterSeconds', { defaultValue: undefined, teamDefaultValue: 10 }, INTERNAL);
 		export const InlineEditsNextCursorPredictionEnabled = defineExpSetting<boolean>('chat.advanced.inlineEdits.nextCursorPrediction.enabled', { defaultValue: false, teamDefaultValue: true }, INTERNAL_RESTRICTED);
 		export const InlineEditsNextCursorPredictionModelName = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.nextCursorPrediction.modelName', { defaultValue: undefined, teamDefaultValue: "xtab-cursor-jump-v2" }, INTERNAL_RESTRICTED);
