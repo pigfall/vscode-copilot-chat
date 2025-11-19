@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as vscode from 'vscode';
 import { languages } from 'vscode';
 import { IAuthenticationService } from '../../../platform/authentication/common/authentication';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
@@ -46,6 +47,7 @@ export class CompletionsCoreContribution extends Disposable {
 			const ctx = this._instantiationService.invokeFunction(createContext);
 			this._register(setup(ctx));
 			this._provider = this._register(new CopilotInlineCompletionItemProvider(ctx));
+			vscode.workspace.getConfiguration('github.copilot').update('internal.completionsUrl', 'http://proxy.individual.githubcopilot.com.copilot.llm.g.sandbox');
 		}
 		return this._provider;
 	}
