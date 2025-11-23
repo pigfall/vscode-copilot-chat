@@ -1681,6 +1681,11 @@
 				"vendor": "customoai",
 				"displayName": "OpenAI Compatible",
 				"managementCommand": "github.copilot.chat.manageBYOK"
+			},
+			{
+				"vendor": "crafting",
+				"displayName": "Crafting",
+				"managementCommand": "github.copilot.chat.manageBYOK"
 			}
 		],
 		"interactiveSession": [
