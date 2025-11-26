@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ClientHttp2Stream } from 'http2';
+import { ConfigKey } from '../../../../../../platform/configuration/common/configurationService';
 import { CancellationToken as ICancellationToken } from '../../../types/src';
 import { CopilotToken, CopilotTokenManager } from '../auth/copilotTokenManager';
 import { onCopilotToken } from '../auth/copilotTokenNotifier';
@@ -57,6 +58,7 @@ type BaseFetchRequest = {
  * API request.
  */
 type CompletionFetchRequestFields = {
+	model?: string;
 	/** The prompt suffix to send to the model. */
 	suffix: string;
 	/** Whether to stream back a response in SSE format. Always true: non streaming requests are not supported by this proxy */
@@ -495,6 +497,11 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 			stream: true, // Always true: non streaming requests are not supported by this proxy
 			extra: params.extra,
 		};
+		const fimCompletionModel = ctx.configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName)
+		if (fimCompletionModel) {
+			request.model = fimCompletionModel
+		}
+
 
 		if (params.requestLogProbs || !disableLogProb) {
 			request.logprobs = 2; // Request that logprobs of 2 tokens (i.e. including the best alternative) be returned

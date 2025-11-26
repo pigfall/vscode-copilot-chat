@@ -2219,6 +2219,9 @@
 				"title": "GitHub Copilot Chat",
 				"id": "stable",
 				"properties": {
+					"github.copilot.chat.advanced.inlineEdits.fimcompletion.model":{
+						"type":"string"
+					},
 					"github.copilot.chat.advanced.inlineEdits.xtabProvider.url": {
 						"type": "string"
 					},

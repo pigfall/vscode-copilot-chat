@@ -59,19 +59,21 @@ export class CraftingConfigCopilotContribution extends Disposable {
 
 	// Enable FIM Completion if has supported model.
 	private enableFIMCompletionIfHasSupportedModel(models: CraftingModel[]) {
-		let hasSupportModel: boolean = false;
+		let defaultFIMModel: CraftingModel | undefined;
 		for (const model of models) {
 			if (model.provider === "openai" && model.name === "gpt-3.5-turbo-instruct") {
-				hasSupportModel = true;
+				defaultFIMModel = model;
 				break;
 			}
 		}
-		if (!hasSupportModel) {
+
+		if (!defaultFIMModel) {
 			this._configurationService.setConfig(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider, false);
 			return;
 		}
 
 		// Enable FIM completion.
+		this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionModelName, `${defaultFIMModel.provider}:${defaultFIMModel.name}`);
 		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider, true);
 	}
 }

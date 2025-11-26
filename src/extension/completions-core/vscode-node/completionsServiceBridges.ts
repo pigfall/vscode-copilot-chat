@@ -97,7 +97,7 @@ export function createContext(serviceAccessor: ServicesAccessor): Context {
 	const configurationService = serviceAccessor.get(IConfigurationService);
 	const experimentationService = serviceAccessor.get(IExperimentationService);
 
-	const ctx = new Context();
+	const ctx = new Context(configurationService);
 
 	// Bridges
 	for (const bridge of bridges) {
