@@ -23,7 +23,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		@ILogService private readonly _logService: ILogService,
 	) {
 		super();
-		this._logService.debug("CraftingConfigCopilotContribution contributed");
+		this._logService.info("CraftingConfigCopilotContribution contributed");
 		this._register(autorun((reader) => {
 			const models = this._models.read(reader);
 			if (models === undefined) {
@@ -32,12 +32,32 @@ export class CraftingConfigCopilotContribution extends Disposable {
 				}, 1000 * 3);
 				return;
 			}
-			// Enable FIM completion if has openai model.
+			// Enable FIM completion if has supported model.
 			this.enableFIMCompletionIfHasSupportedModel(models);
+			// Enable Next Edit Suggestion if has supported model.
+			this.enableNextEditSuggestionIfHasSupportedModel(models);
 		}));
 		this._modelService.getModels();
 	}
 
+	// Enable Next Edit Suggestion if has supported model.
+	private enableNextEditSuggestionIfHasSupportedModel(models: CraftingModel[]) {
+		for (const model of models) {
+			if (model.purposes.includes("GENERIC")) {
+				const nesURL = `http://${model.provider}.proxy.llm.g.sandbox/chat/completions`;
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsUnification, true).
+					then(() => this._logService.info("Enabled InlineEditsUnification ."), (e) => this._logService.error(`Failed to Enabled InlineEditsUnification, error:${e}`));
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, `http://${model.provider}.proxy.llm.g.sandbox/chat/completions`).
+					then(() => this._logService.info(`Set nes url as ${nesURL}`), (e) => this._logService.error(`Failed to set nes url ${nesURL}, error:${e}`));
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, model.name).
+					then(() => this._logService.info(`Set nes model as ${model.name}`), (e) => this._logService.error(`Set nes model name as ${model.name}, error:${e}`));
+				break;
+			}
+		}
+	}
+
+
+	// Enable FIM Completion if has supported model.
 	private enableFIMCompletionIfHasSupportedModel(models: CraftingModel[]) {
 		let hasSupportModel: boolean = false;
 		for (const model of models) {

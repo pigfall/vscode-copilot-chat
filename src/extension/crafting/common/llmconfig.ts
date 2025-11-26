@@ -17,4 +17,5 @@ export interface ICraftingModelService {
 export interface CraftingModel {
 	provider: string;
 	name: string;
+	purposes: string[];
 }

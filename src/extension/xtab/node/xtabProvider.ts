@@ -994,7 +994,7 @@ export class XtabProvider implements IStatelessNextEditProvider {
 
 		const promptingStrategy = this.determinePromptingStrategy();
 		const sourcedModelConfig = {
-			modelName: this.configService.getExperimentBasedConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, this.expService),
+			modelName: this.configService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName),
 			promptingStrategy,
 			currentFile: {
 				maxTokens: this.configService.getExperimentBasedConfig(ConfigKey.Internal.InlineEditsXtabCurrentFileMaxTokens, this.expService),
@@ -1250,10 +1250,10 @@ export class XtabProvider implements IStatelessNextEditProvider {
 	private getEndpoint(configuredModelName: string | undefined): ChatEndpoint {
 		const url = this.configService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl);
 		const apiKey = this.configService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderApiKey);
-		const hasOverriddenUrlAndApiKey = url !== undefined && apiKey !== undefined;
+		const hasOverriddenUrl = url !== undefined;
 
-		if (hasOverriddenUrlAndApiKey) {
-			return this.instaService.createInstance(XtabEndpoint, url, apiKey, configuredModelName);
+		if (hasOverriddenUrl) {
+			return this.instaService.createInstance(XtabEndpoint, url, apiKey || "", configuredModelName);
 		}
 
 		return createProxyXtabEndpoint(this.instaService, configuredModelName);

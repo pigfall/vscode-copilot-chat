@@ -26,9 +26,10 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		try {
 			const models = await this._craftingModelService.getModels();
-			// this._logService.info(`DEBUG get models succeeded ${models}`);
 			return Promise.resolve(
-				models.map((model) => {
+				models.filter((model) => {
+					return model.purposes.includes("GENERIC");
+				}).map((model) => {
 					return {
 						id: model.provider + ":" + model.name,
 						name: model.name,
