@@ -2219,6 +2219,10 @@
 				"title": "GitHub Copilot Chat",
 				"id": "stable",
 				"properties": {
+					"github.copilot.chat.advanced.inlineEdits.githubCompletionsProvider.enabled":{
+						"type":"boolean",
+						"default":false
+					},
 					"github.copilot.chat.advanced.inlineEdits.fimcompletion.model":{
 						"type":"string"
 					},
