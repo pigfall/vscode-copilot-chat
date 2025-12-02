@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { resolve } from '../../../util/vs/base/common/path';
 import { baseActivate } from '../vscode/extension';
@@ -18,6 +19,7 @@ import { registerServices } from './services';
 // ###############################################################################################
 
 //#region TODO@bpasero this needs cleanup
+import { OutputChannelName } from '../../../platform/log/vscode/outputChannelLogTarget';
 import '../../intents/node/allIntents';
 
 function configureDevPackages() {
@@ -33,6 +35,15 @@ function configureDevPackages() {
 //#endregion
 
 export function activate(context: ExtensionContext, forceActivation?: boolean) {
+	// As we has made this extension as the vscode builtin extension, we didn't find a way to disable the builtin extension from code now.
+	// So we check the setting to do not really activate the extension by default.
+	// The default `github.copilot.chat.enabled` is false now.
+	if (!vscode.workspace.getConfiguration('github.copilot.chat').get<boolean>("enabled")) {
+		const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
+		outputChannel.appendLine(`Extension disabled. You could enable the extension by setting "github.copilot.chat.enabled": true in your settings. And refresh the web vscode`);
+		return;
+	}
+
 	return baseActivate({
 		context,
 		registerServices,
