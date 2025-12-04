@@ -33,7 +33,6 @@ export class NodeFetchFetcher extends BaseFetchFetcher {
 
 
 // TODO check if the api.github.com is configurable.
-// TODO define copilot.llm.g.sandbox as const.
 const urlMap = new Map<string, string>();
 urlMap.set('https://api.github.com/', 'http://api.github.com' + '.' + craftingServerBaseAddress + "/");
 
@@ -48,7 +47,6 @@ function getFetch(): typeof globalThis.fetch {
 				}
 			}
 		}
-		console.log(`TZZDEBUG url: ${input}`);
 		return fetch(input, { dispatcher: agent.value, ...init });
 	};
 }

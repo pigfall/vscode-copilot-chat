@@ -661,14 +661,13 @@ export namespace ConfigKey {
 		export const InlineEditsProviderId = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.providerId', undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsHideInternalInterface = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.hideInternalInterface', vBoolean(), false, INTERNAL_RESTRICTED);
 		export const InlineEditsLogCancelledRequests = defineValidatedSetting<boolean>('chat.advanced.inlineEdits.logCancelledRequests', vBoolean(), false, INTERNAL_RESTRICTED);
-		export const InlineEditsUnification = defineExpSetting<boolean>('chat.advanced.inlineEdits.unification', true, INTERNAL_RESTRICTED); // This will enable the next edit suggestion.
+		export const InlineEditsUnification = defineSetting<boolean>('chat.advanced.inlineEdits.unification', false); // This will enable the next edit suggestion.
 		export const InlineEditsTriggerOnEditorChangeAfterSeconds = defineExpSetting<number | undefined>('chat.advanced.inlineEdits.triggerOnEditorChangeAfterSeconds', { defaultValue: undefined, teamDefaultValue: 10 }, INTERNAL);
 		export const InlineEditsNextCursorPredictionEnabled = defineExpSetting<boolean>('chat.advanced.inlineEdits.nextCursorPrediction.enabled', { defaultValue: false, teamDefaultValue: true }, INTERNAL_RESTRICTED);
 		export const InlineEditsNextCursorPredictionModelName = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.nextCursorPrediction.modelName', { defaultValue: undefined, teamDefaultValue: "xtab-cursor-jump-v2" }, INTERNAL_RESTRICTED);
 		export const InlineEditsNextCursorPredictionUrl = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.nextCursorPrediction.url', vString(), undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsNextCursorPredictionApiKey = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.nextCursorPrediction.apiKey', vString(), undefined, INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderUrl = defineSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.url', undefined);
-		export const FIMCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.fimcompletion.model', undefined);
 		export const InlineEditsXtabProviderApiKey = defineValidatedSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.apiKey', vString(), "placehold", INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderModelConfiguration = defineValidatedSetting<xtabPromptOptions.ModelConfiguration | undefined>('chat.advanced.inlineEdits.xtabProvider.modelConfiguration', xtabPromptOptions.MODEL_CONFIGURATION_VALIDATOR, { defaultValue: undefined, teamDefaultValue: { modelName: "xtab-281-v2-bs48-2", promptingStrategy: xtabPromptOptions.PromptingStrategy.Xtab275, includeTagsInCurrentFile: false } }, INTERNAL_RESTRICTED);
 		export const InlineEditsXtabProviderModelConfigurationString = defineExpSetting<string | undefined>('chat.advanced.inlineEdits.xtabProvider.modelConfigurationString', undefined, INTERNAL_RESTRICTED);
@@ -746,6 +745,10 @@ export namespace ConfigKey {
 		export const CopilotCLIEnabled = defineSetting<boolean | undefined>('chat.advanced.copilotCLI.enabled', { defaultValue: false, teamDefaultValue: true });
 		export const CopilotCloudEnabled = defineSetting<boolean | undefined>('chat.advanced.copilotCodingAgent.enabled', false);
 		export const Gpt5AlternativePatch = defineExpSetting<boolean>('chat.advanced.gpt5AlternativePatch', false);
+
+		export const NESEnabled = defineSetting<boolean | undefined>('chat.nes.enabled', true);
+		export const FIMCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.fimcompletion.model', undefined);
+		export const FIMCompletionEnabled = defineSetting<boolean | undefined>('chat.fimcompletion.enabled', true);
 	}
 
 	/** Use the Responses API instead of Chat Completions when supported */
