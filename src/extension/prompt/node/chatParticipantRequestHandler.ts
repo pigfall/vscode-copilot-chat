@@ -40,7 +40,6 @@ import { InternalToolReference } from '../common/intents';
 import { ChatTelemetryBuilder } from './chatParticipantTelemetry';
 import { DefaultIntentRequestHandler } from './defaultIntentRequestHandler';
 import { IDocumentContext } from './documentContext';
-import { IntentDetector } from './intentDetector';
 import { CommandDetails } from './intentRegistry';
 import { IIntent } from './intents';
 
@@ -62,7 +61,6 @@ export class ChatParticipantRequestHandler {
 	private readonly location: ChatLocation;
 	private readonly stream: ChatResponseStream;
 	private readonly documentContext: IDocumentContext | undefined;
-	private readonly intentDetector: IntentDetector;
 	private readonly turn: Turn;
 
 	private readonly chatTelemetry: ChatTelemetryBuilder;
@@ -87,7 +85,6 @@ export class ChatParticipantRequestHandler {
 	) {
 		this.location = this.getLocation(request);
 
-		this.intentDetector = this._instantiationService.createInstance(IntentDetector);
 
 		this.stream = stream;
 
@@ -239,17 +236,6 @@ export class ChatParticipantRequestHandler {
 				} else {
 					const intentHandler = this._instantiationService.createInstance(DefaultIntentRequestHandler, intent, this.conversation, this.request, this.stream, this.token, this.documentContext, this.location, this.chatTelemetry, undefined, this.onPaused);
 					chatResult = intentHandler.getResult();
-				}
-
-				if (!this.request.isParticipantDetected) {
-					this.intentDetector.collectIntentDetectionContextInternal(
-						this.turn.request.message,
-						this.request.enableCommandDetection ? intent.id : 'none',
-						new ChatVariablesCollection(this.request.references),
-						this.location,
-						history,
-						this.documentContext?.document
-					);
 				}
 
 				result = await chatResult;

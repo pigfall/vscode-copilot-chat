@@ -165,10 +165,10 @@ export class ConversationFeature implements IExtensionContribution {
 	private registerProviders(): IDisposable {
 		const disposables = new DisposableStore();
 		try {
-			const detectionProvider = this.registerParticipantDetectionProvider();
-			if (detectionProvider) {
-				disposables.add(detectionProvider);
-			}
+			//const detectionProvider = this.registerParticipantDetectionProvider();
+			//if (detectionProvider) {
+			//	disposables.add(detectionProvider);
+			//}
 
 			const searchDisposable = this.registerSearchProvider();
 			if (searchDisposable) {
