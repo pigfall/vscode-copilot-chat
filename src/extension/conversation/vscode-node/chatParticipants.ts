@@ -104,8 +104,8 @@ class ChatParticipants implements IDisposable {
 		this._disposables.add(this.registerEditorDefaultAgent());
 		this._disposables.add(this.registerNotebookEditorDefaultAgent());
 		this._disposables.add(this.registerNotebookDefaultAgent());
-		this._disposables.add(this.registerWorkspaceAgent());
-		this._disposables.add(this.registerVSCodeAgent());
+		// this._disposables.add(this.registerWorkspaceAgent());
+		// this._disposables.add(this.registerVSCodeAgent());
 		this._disposables.add(this.registerTerminalAgent());
 		this._disposables.add(this.registerTerminalPanelAgent());
 		this._disposables.add(this.registerReplayAgent());
