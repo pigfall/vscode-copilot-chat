@@ -32,7 +32,7 @@
 	"github.copilot.command.buildLocalWorkspaceIndex": "Build Local Workspace Index",
 	"github.copilot.command.buildRemoteWorkspaceIndex": "Build Remote Workspace Index",
 	"github.copilot.viewsWelcome.signIn": {
-		"message": "Activating the copilot",
+		"message": "Activate Copilot",
 		"comment": [
 			"{Locked='['}",
 			"{Locked='](command:workbench.action.chat.triggerSetupForceSignIn)'}"

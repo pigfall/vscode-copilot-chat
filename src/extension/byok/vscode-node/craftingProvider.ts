@@ -28,9 +28,9 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 					return {
 						id: model.provider + ":" + model.name,
 						name: model.name,
-						family: "TODO",
+						family: model.dialect?.model_class ?? "",
 						isDefault: models[0] === model,
-						version: "",
+						version: model.dialect?.sub_class ?? "",
 						isUserSelectable: true,
 						maxInputTokens: 140000, // TODO
 						maxOutputTokens: 140000, // TODO
@@ -70,6 +70,6 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	}
 
 	async provideTokenCount(model: LanguageModelChatInformation, text: string | LanguageModelChatRequestMessage, token: CancellationToken): Promise<number> {
-		throw new Error("TODO");
+		throw new Error("Unimplmented");
 	}
 }

@@ -13,4 +13,9 @@ export interface CraftingModel {
 	provider: string;
 	name: string;
 	purposes: string[];
+	dialect?: {
+		source?: string;
+		model_class?: string;
+		sub_class?: string;
+	};
 }

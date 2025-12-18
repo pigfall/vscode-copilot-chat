@@ -75,9 +75,9 @@ export function getAnyAuthSession(configurationService: IConfigurationService, o
 	// So we do not send the real request, directly mock the response at here.
 	return Promise.resolve(
 		{
-			accessToken: "mocked",
-			account: { id: "mocked", label: "mocked" },
-			id: "mocked",
+			accessToken: "placeholder",
+			account: { id: "placeholder", label: "placeholder" },
+			id: "placeholder",
 			scopes: [],
 		}
 	);

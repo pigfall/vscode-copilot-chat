@@ -88,9 +88,6 @@ export class XtabEndpoint extends ChatEndpoint {
 		const apiKey = this._configService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderApiKey) || this._apiKey;
 		if (!apiKey) {
 			return {};
-			//const message = `Missing API key for custom URL (${this.urlOrRequestMetadata}). Provide the API key using vscode setting \`github.copilot.chat.advanced.inlineEdits.xtabProvider.apiKey\` or, if in simulations using \`--nes-api-key\` or \`--config-file\``;
-			//console.error(message);
-			//throw new Error(message);
 		}
 		return {
 			'Authorization': `Bearer ${apiKey}`,

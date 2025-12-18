@@ -17,7 +17,7 @@ export class CraftingBYOKContrib extends Disposable implements IExtensionContrib
 	}
 
 	private registerModelProvider() {
-		this._logService.info('Crafting Model Provider was regestred!');
+		this._logService.info('Crafting Model Provider was registered!');
 		const provider = this._instantiationService.createInstance(CraftingModelProvider, this._lmconfigs);
 		lm.registerLanguageModelChatProvider("crafting", provider);
 	}

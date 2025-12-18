@@ -579,7 +579,7 @@ export namespace ConfigKey {
 	*/
 	export namespace Shared {
 		/** Allows for overriding the base domain we use for making requests to the CAPI. This helps CAPI devs develop against a local instance. */
-		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', "http://proxy.individual.githubcopilot.com." + craftingServerBaseAddress, INTERNAL); // TODO define copilot.llm.g.sandbox as const.
+		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', "http://proxy.individual.githubcopilot.com." + craftingServerBaseAddress, INTERNAL);
 		export const DebugOverrideCAPIUrl = defineSetting<string | undefined>('advanced.debug.overrideCapiUrl', "http://api.githubcopilot.com." + craftingServerBaseAddress, INTERNAL);
 		export const DebugUseNodeFetchFetcher = defineSetting('advanced.debug.useNodeFetchFetcher', true);
 		export const DebugUseNodeFetcher = defineSetting('advanced.debug.useNodeFetcher', false);
