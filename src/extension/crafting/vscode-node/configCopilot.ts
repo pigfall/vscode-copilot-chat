@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
+import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { TaskSingler } from '../../../util/common/taskSingler';
 import { createTracer, ITracer } from '../../../util/common/tracing';
 import { Emitter } from '../../../util/vs/base/common/event';
@@ -55,12 +56,12 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		}
 
 		const model = models[0];
-		const nesURL = `http://${model.provider}.proxy.llm.g.sandbox/chat/completions`;
+		const nesURL = `http://${craftingLLMAPIHost}/chat/completions`;
 		Promise.all(
 			[
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsUnification, true),
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL),
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, model.name)
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`)
 			]
 		).then(
 			() => {

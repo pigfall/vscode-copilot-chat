@@ -1,6 +1,7 @@
 import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessage, LanguageModelChatMessage2, LanguageModelChatProvider, LanguageModelChatRequestMessage, LanguageModelResponsePart2, Progress, ProvideLanguageModelChatResponseOptions } from 'vscode';
 import { IChatModelInformation } from '../../../platform/endpoint/common/endpointProvider';
 import { ILogService } from '../../../platform/log/common/logService';
+import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { TokenizerType } from '../../../util/common/tokenizer';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
@@ -49,7 +50,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
 
 		const modelInfo: IChatModelInformation = {
-			id: model.name,
+			id: model.id,
 			name: model.name,
 			model_picker_enabled: true,
 			is_chat_default: false,
@@ -57,16 +58,15 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			version: model.version,
 			capabilities: {
 				type: "chat",
-				family: model.id,
+				family: model.family,
 				supports: {
 					streaming: true,
 				},
 				tokenizer: TokenizerType.O200K,
 			}
 		};
-		const provider = model.id.split(":")[0];
-		const openAIChatEndpoint = this._instantiationService.createInstance(OpenAIEndpoint, modelInfo, "", `http://${provider}.proxy.llm.g.sandbox/chat/completions`);
-		return this._lmWrapper.provideLanguageModelResponse(openAIChatEndpoint, messages, options, options.requestInitiator, progress, token);
+		const chatEndpoint = this._instantiationService.createInstance(OpenAIEndpoint, modelInfo, "", `http://${craftingLLMAPIHost}/chat/completions`);
+		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}
 
 	async provideTokenCount(model: LanguageModelChatInformation, text: string | LanguageModelChatRequestMessage, token: CancellationToken): Promise<number> {

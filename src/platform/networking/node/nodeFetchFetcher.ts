@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as undici from 'undici';
-import { craftingServerBaseAddress } from '../../../util/common/crafting';
+import { craftingLLMCopilotHost } from '../../../util/common/crafting';
 import { Lazy } from '../../../util/vs/base/common/lazy';
 import { IEnvService } from '../../env/common/envService';
 import { BaseFetchFetcher } from './baseFetchFetcher';
@@ -34,7 +34,7 @@ export class NodeFetchFetcher extends BaseFetchFetcher {
 
 // TODO check if the api.github.com is configurable.
 const urlMap = new Map<string, string>();
-urlMap.set('https://api.github.com/', 'http://api.github.com' + '.' + craftingServerBaseAddress + "/");
+urlMap.set('https://api.github.com/', 'http://api.github.com' + '.' + craftingLLMCopilotHost + "/");
 
 function getFetch(): typeof globalThis.fetch {
 	const fetch = (globalThis as any).__vscodePatchedFetch || globalThis.fetch;

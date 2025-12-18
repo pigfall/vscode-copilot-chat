@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type { ConfigurationChangeEvent, ConfigurationScope } from 'vscode';
-import { craftingServerBaseAddress } from '../../../util/common/crafting';
+import { craftingLLMCopilotHost } from '../../../util/common/crafting';
 import { createServiceIdentifier } from '../../../util/common/services';
 import { BugIndicatingError } from '../../../util/vs/base/common/errors';
 import { Emitter, Event } from '../../../util/vs/base/common/event';
@@ -579,8 +579,8 @@ export namespace ConfigKey {
 	*/
 	export namespace Shared {
 		/** Allows for overriding the base domain we use for making requests to the CAPI. This helps CAPI devs develop against a local instance. */
-		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', "http://proxy.individual.githubcopilot.com." + craftingServerBaseAddress, INTERNAL);
-		export const DebugOverrideCAPIUrl = defineSetting<string | undefined>('advanced.debug.overrideCapiUrl', "http://api.githubcopilot.com." + craftingServerBaseAddress, INTERNAL);
+		export const DebugOverrideProxyUrl = defineSetting<string | undefined>('advanced.debug.overrideProxyUrl', "http://proxy.individual.githubcopilot.com." + craftingLLMCopilotHost, INTERNAL);
+		export const DebugOverrideCAPIUrl = defineSetting<string | undefined>('advanced.debug.overrideCapiUrl', "http://api.githubcopilot.com." + craftingLLMCopilotHost, INTERNAL);
 		export const DebugUseNodeFetchFetcher = defineSetting('advanced.debug.useNodeFetchFetcher', true);
 		export const DebugUseNodeFetcher = defineSetting('advanced.debug.useNodeFetcher', false);
 		export const DebugUseElectronFetcher = defineSetting('advanced.debug.useElectronFetcher', false);
