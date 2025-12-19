@@ -8,6 +8,7 @@ import { languages } from 'vscode';
 import { IAuthenticationService } from '../../../platform/authentication/common/authentication';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
+import { craftingLLMCopilotHost } from '../../../util/common/crafting';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observableInternal';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
@@ -47,7 +48,7 @@ export class CompletionsCoreContribution extends Disposable {
 			const ctx = this._instantiationService.invokeFunction(createContext);
 			this._register(setup(ctx));
 			this._provider = this._register(new CopilotInlineCompletionItemProvider(ctx));
-			vscode.workspace.getConfiguration('github.copilot').update('internal.completionsUrl', 'http://proxy.individual.githubcopilot.com.copilot.llm.g.sandbox');
+			vscode.workspace.getConfiguration('github.copilot').update('internal.completionsUrl', `http://proxy.individual.githubcopilot.com.${craftingLLMCopilotHost}`);
 		}
 		return this._provider;
 	}
