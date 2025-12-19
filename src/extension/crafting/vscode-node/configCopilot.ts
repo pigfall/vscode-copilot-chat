@@ -117,7 +117,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 	private activateFIMCompletionWithAutoSelectModel(models: CraftingModel[]) {
 		// Let's choose the gpt-3.5-turbo-instruct firstly.
 		const matchedModels = models.filter((model) => {
-			return model.provider === "openai" && model.name === "gpt-3.5-turbo-instruct";
+			return model.name === "gpt-3.5-turbo-instruct";
 		});
 		let fimModel: undefined | CraftingModel;
 		if (matchedModels && matchedModels.length > 0) {

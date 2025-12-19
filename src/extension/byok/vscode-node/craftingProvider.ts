@@ -51,7 +51,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 
 		const modelInfo: IChatModelInformation = {
 			id: model.id,
-			name: model.name,
+			name: model.id, // crafting chat completion requires the format `{provider}:{model_name}`
 			model_picker_enabled: true,
 			is_chat_default: false,
 			is_chat_fallback: false,
