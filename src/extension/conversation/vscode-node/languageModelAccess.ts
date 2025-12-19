@@ -82,14 +82,6 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 	}
 
 	private _registerChatProvider(): void {
-		const provider: vscode.LanguageModelChatProvider = {
-			onDidChangeLanguageModelChatInformation: this._onDidChange.event,
-			provideLanguageModelChatInformation: this._provideLanguageModelChatInfo.bind(this),
-			provideLanguageModelChatResponse: this._provideLanguageModelChatResponse.bind(this),
-			provideTokenCount: this._provideTokenCount.bind(this)
-		};
-		console.log(provider);
-		// this._register(vscode.lm.registerLanguageModelChatProvider('copilot', provider));
 		this._register(this._authenticationService.onDidAuthenticationChange(() => {
 			// Auth changed which means models could've changed. Fire the event
 			this._onDidChange.fire();
