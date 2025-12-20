@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as vscode from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
 import { craftingLLMAPIHost } from '../../../util/common/crafting';
@@ -34,6 +35,8 @@ export class CraftingConfigCopilotContribution extends Disposable {
 				}, 1000 * 3);
 				return;
 			}
+			// Trigger to refresh the model list which is showed in model picker.
+			vscode.lm.selectChatModels();
 			// Activate FIM completion if has supported model.
 			this.activateFIMCompletionIfHasSupportedModel(models);
 			// Activate Next Edit Suggestion if has supported model.
