@@ -39,6 +39,7 @@ export function activate(context: ExtensionContext, forceActivation?: boolean) {
 	// So we check the setting to do not really activate the extension by default.
 	// The default `github.copilot.chat.enabled` is false now.
 	if (!vscode.workspace.getConfiguration('github.copilot.chat').get<boolean>("enabled")) {
+		vscode.commands.executeCommand('setContext', "github.copilot-chat.toEnable", true);
 		const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
 		outputChannel.appendLine(`Extension disabled. You could enable the extension by setting "github.copilot.chat.enabled": true in your settings. And refresh the web vscode`);
 		return;

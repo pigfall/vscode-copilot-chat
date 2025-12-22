@@ -1555,6 +1555,12 @@
 			{
 				"icon": "$(copilot-large)",
 				"title": "Ask Copilot",
+				"content": "%github.copilot.viewsWelcome.toEnable%",
+				"when": "github.copilot-chat.toEnable"
+			},
+			{
+				"icon": "$(copilot-large)",
+				"title": "Ask Copilot",
 				"content": "%github.copilot.viewsWelcome.signIn%",
 				"when": "!github.copilot-chat.activated && !github.copilot.offline && !github.copilot.interactiveSession.individual.expired && !github.copilot.interactiveSession.enterprise.disabled && !github.copilot.interactiveSession.contactSupport && !github.copilot.interactiveSession.chatDisabled && !github.copilot.interactiveSession.switchToReleaseChannel"
 			},
