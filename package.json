@@ -2073,25 +2073,10 @@
 				"title": "GitHub Copilot Chat",
 				"id": "stable",
 				"properties": {
-					"github.copilot.chat.enabled":{
-						"type":"boolean",
-						"default":false,
-						"description": "config this to decide if enable the extension"
-					},
 					"github.copilot.chat.fimcompletion.enabled":{
 						"type":"boolean",
 						"default":true,
 						"description": "config this to decide if enable the FIM completion"
-					},
-					"github.copilot.chat.nes.enabled":{
-						"type":"boolean",
-						"default":true,
-						"description": "config this to decide if enable the next edit suggestion"
-					},
-					"github.copilot.chat.advanced.inlineEdits.githubCompletionsProvider.enabled":{
-						"type":"boolean",
-						"default":false,
-						"description": "this is auto configed by the extension, user should not config this manually"
 					},
 					"github.copilot.chat.advanced.inlineEdits.fimcompletion.model":{
 						"type":"string",
@@ -2186,7 +2171,7 @@
 					},
 					"github.copilot.nextEditSuggestions.enabled": {
 						"type": "boolean",
-						"default": false,
+						"default": true,
 						"tags": [
 							"nextEditSuggestions",
 							"onExp"

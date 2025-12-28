@@ -36,9 +36,7 @@ function configureDevPackages() {
 //#endregion
 
 export function activate(context: ExtensionContext, forceActivation?: boolean) {
-	// As we has made this extension as the vscode builtin extension, we didn't find a way to disable the builtin extension from code now.
-	// So we check the setting to do not really activate the extension by default.
-	// The default `github.copilot.chat.enabled` is false now.
+	// Do not activate if there is not any model.
 	try {
 		const output = execSync('cs llm model list -o json');
 		const models: Object[] = JSON.parse(output.toString());
@@ -54,13 +52,6 @@ export function activate(context: ExtensionContext, forceActivation?: boolean) {
 		vscode.commands.executeCommand('setContext', "github.copilot-chat.listModelError", true);
 		return;
 	}
-
-	//if (!vscode.workspace.getConfiguration('github.copilot.chat').get<boolean>("enabled")) {
-	//	vscode.commands.executecommand('setcontext', "github.copilot-chat.toenable", true);
-	//	const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
-	//	outputChannel.appendLine(`Extension disabled. You could enable the extension by setting "github.copilot.chat.enabled": true in your settings. And refresh the web vscode`);
-	//	return;
-	//}
 
 	return baseActivate({
 		context,

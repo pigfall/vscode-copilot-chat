@@ -499,7 +499,9 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 		};
 		const fimCompletionModel = ctx.configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName)
 		if (fimCompletionModel) {
-			request.model = fimCompletionModel
+			request.model = fimCompletionModel;
+		}else{
+			return 'not-sent';
 		}
 
 

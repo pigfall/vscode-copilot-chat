@@ -47,6 +47,7 @@ import { Position } from '../../../util/vs/editor/common/core/position';
 import { Range } from '../../../util/vs/editor/common/core/range';
 import { LineRange } from '../../../util/vs/editor/common/core/ranges/lineRange';
 import { OffsetRange } from '../../../util/vs/editor/common/core/ranges/offsetRange';
+import { StringText } from '../../../util/vs/editor/common/core/text/abstractText';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { Position as VscodePosition } from '../../../vscodeTypes';
 import { Delayer, DelaySession } from '../../inlineEdits/common/delayer';
@@ -230,6 +231,9 @@ export class XtabProvider implements IStatelessNextEditProvider {
 		}
 
 		const promptOptions = this.determineModelConfiguration(activeDocument);
+		if (!promptOptions.modelName) {
+			return Result.error(new NoNextEditReason.NoSuggestions(new StringText('no model'), undefined));
+		}
 
 		const endpoint = this.getEndpoint(promptOptions.modelName);
 		logContext.setEndpointInfo(typeof endpoint.urlOrRequestMetadata === 'string' ? endpoint.urlOrRequestMetadata : JSON.stringify(endpoint.urlOrRequestMetadata.type), endpoint.model);

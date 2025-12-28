@@ -39,24 +39,25 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			}
 			// Trigger to refresh the model list which is showed in model picker.
 			vscode.lm.selectChatModels();
-			// Activate FIM completion if has supported model.
-			this.activateFIMCompletionIfHasSupportedModel(models);
-			// Activate Next Edit Suggestion if has supported model.
-			this.activateNextEditSuggestionIfHasSupportedModel(models);
+			// Configure FIM completion.
+			this.configureFIMCompletion(models);
+			// Configure Next Edit Suggestion.
+			this.configureNextEditSuggestion(models);
 		}));
 		this._modelService.getModels();
 	}
 
-	// Activate Next Edit Suggestion if has supported model.
-	private activateNextEditSuggestionIfHasSupportedModel(models: CraftingModel[]) {
-		const enabled = this._configurationService.getConfig(ConfigKey.Internal.NESEnabled);
+	// Configure Next Edit Suggestion.
+	private configureNextEditSuggestion(models: CraftingModel[]) {
+		const enabled = this._configurationService.getExperimentBasedConfig(ConfigKey.InlineEditsEnabled, this._expService);
 		if (!enabled) {
-			this._infoTracer.trace(`Disabled Next Edit Suggestion`);
+			this._infoTracer.trace(`Next edit suggestion is disabled`);
 			return;
 		}
 
 		if (models.length === 0) {
-			this.deactivateNES(`no model available`);
+			this._infoTracer.trace(`No models are available for next edit suggestion`);
+			this.configureNextEditSuggestionModel(undefined);
 			return;
 		}
 
@@ -74,39 +75,50 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			model = models[0];
 		}
 		const nesURL = `http://${craftingLLMAPIHost}/chat/completions`;
-		Promise.all(
-			[
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL),
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`),
-				this._configurationService.setConfig(ConfigKey.InlineEditsEnabled, true),
-			]
-		).then(
+		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL).then(
 			() => {
-				this._infoTracer.trace(`Activated Next Edit Suggestion with model: ${model.name}`);
+				this.configureNextEditSuggestionModel(model);
 			},
 			(e) => {
-				this._errorTracer.trace(`Failed to activate Next Edit Suggestion: ${e}`);
-			}
+				this._errorTracer.trace(`Failed to set xtab provider url: ${e}`);
+			},
 		);
 	}
 
+	private configureNextEditSuggestionModel(model: CraftingModel | undefined) {
+		let value = "";
+		if (model) {
+			value = `${model.provider}:${model.name}`;
+		}
+		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, value).then(
+			() => {
+				this._infoTracer.trace(`Use ${value} as next edit suggestion model`);
+			},
+			(e) => {
+				this._errorTracer.trace(`Failed to set ${value} as next edit suggestion model: ${e}`);
+			}
+		);
 
-	// Activate FIM Completion if has supported model.
-	private activateFIMCompletionIfHasSupportedModel(models: CraftingModel[]) {
+	}
+
+
+	// Configure FIM Completion.
+	private configureFIMCompletion(models: CraftingModel[]) {
 		const enabled = this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
 		if (!enabled) {
-			this._infoTracer.trace(`Disabled FIM completion`);
+			this._infoTracer.trace(`FIM completion is disabled`);
 			return;
 		}
 
 		if (!models || models.length === 0) {
-			this.deactivateFIMCompletion("no model available");
+			this._infoTracer.trace(`No models are available for FIM completion`);
+			this.configureFIMCompletionModel(undefined);
 			return;
 		}
 		const configurationModel = this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName);
 		if (configurationModel === undefined || configurationModel === "") {
 			// Auto select a FIM completion model.
-			this.activateFIMCompletionWithAutoSelectModel(models);
+			this.autoSelectFIMCompletionModel(models);
 			return;
 		}
 
@@ -114,7 +126,8 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		const providerAndModel = configurationModel.split(":", 2);
 		if (providerAndModel.length !== 2) {
 			// Deactivate the FIM completion because the the model specified by user is invalid.
-			this.deactivateFIMCompletion(`invalid FIM completion model config: ${configurationModel}`);
+			this._errorTracer.trace(`invalid FIM completion model config: ${configurationModel}`);
+			this.configureFIMCompletionModel(undefined);
 			return;
 		}
 		const configurationModelObject = models.find((model) => {
@@ -123,15 +136,15 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		if (configurationModelObject === undefined) {
 			this._infoTracer.trace(`User specified FIM completion model (${configurationModel}) not found in available models, auto-selecting a supported model.`);
 			// The model specified by user is not found. Auto choose an another model.
-			this.activateFIMCompletionWithAutoSelectModel(models);
+			this.autoSelectFIMCompletionModel(models);
 			return;
 		}
 
 		// Activate the FIM completion with the user-specified model.
-		this.activateFIMCompletion(configurationModelObject.provider, configurationModelObject.name);
+		this.configureFIMCompletionModel(configurationModelObject);
 	}
 
-	private activateFIMCompletionWithAutoSelectModel(models: CraftingModel[]) {
+	private autoSelectFIMCompletionModel(models: CraftingModel[]) {
 		// Let's choose the gpt-3.5-turbo-instruct firstly.
 		const matchedModels = models.filter((model) => {
 			return model.name === "gpt-3.5-turbo-instruct";
@@ -144,60 +157,22 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			fimModel = models[0];
 		}
 
-		// Enable FIM completion.
-		this.activateFIMCompletion(fimModel.provider, fimModel.name);
+		this.configureFIMCompletionModel(fimModel);
 		return;
 	}
 
-	private deactivateFIMCompletion(reason: String) {
-		const enabled = this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
-		if (!enabled) { // Has been disabled. Do nothing.
-			this._infoTracer.trace(`Deactivated FIM completion: ${reason}`);
-			return;
+	private configureFIMCompletionModel(model: CraftingModel | undefined) {
+		let value = "";
+		if (model) {
+			value = `${model.provider}:${model.name}`;
 		}
-
-		this._infoTracer.trace(`Deactivating FIM completion: ${reason}`);
-		this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionEnabled, false).then(
+		this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionModelName, value).then(
 			() => {
-
-				this._infoTracer.trace(`Deactivated FIM completion`);
+				this._infoTracer.trace(`Use ${value} as FIM completion model`);
 			},
 			(e) => {
-				this._errorTracer.trace(`Failed to deactivate FIM completion: ${e}`);
-			},
-		);
-	}
-
-	private deactivateNES(reason: String) {
-		const enabled = this._configurationService.getConfig(ConfigKey.Internal.NESEnabled);
-		if (!enabled) {
-			this._infoTracer.trace(`Deactivated NES: ${reason}`);
-			return;
-		}
-
-		this._infoTracer.trace(`Deactivating NES: ${reason}`);
-		// The ConfigKey.InlineEditsEnabled really control the next edit suggesion.
-		this._configurationService.setConfig(ConfigKey.InlineEditsEnabled, false).then(
-			() => {
-				this._infoTracer.trace(`Deactivated NES`);
-			},
-			(e) => {
-				this._errorTracer.trace(`Failed to deactivate NES: ${e}`);
-			},
-		);
-	}
-
-	// Enable FIM completion.
-	private activateFIMCompletion(provider: string, modelName: string) {
-		this._infoTracer.trace(`Activating the FIM completion with model: ${provider}:${modelName}`);
-		Promise.all(
-			[
-				this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionModelName, `${provider}:${modelName}`),
-				this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionEnabled, true),
-			]
-		).then(
-			() => this._infoTracer.trace(`Activated the FIM completion with model: ${provider}:${modelName}`),
-			(e) => this._errorTracer.trace(`Failed to activate FIM completion with model: ${provider}:${modelName}, error: ${e}`)
+				this._errorTracer.trace(`Failed to set ${value} as FIM completion model: ${e}`);
+			}
 		);
 	}
 }
