@@ -77,7 +77,8 @@
 			"{Locked='](command:workbench.action.chat.open?%7B%22query%22%3A%22%40vscode%20%2FstartDebugging%20%22%2C%22isPartialQuery%22%3Atrue%7D)'}"
 		]
 	},
-	"github.copilot.viewsWelcome.toEnable": "Enable the extension by setting 'github.copilot.chat.enabled':true in vscode settings.json and reload window",
+	"github.copilot.viewsWelcome.noModel": "No models are available. Please configure models in your organization's LLM settings",
+	"github.copilot.viewsWelcome.listModelError": "Failed to list models. Please try to reload the vscode",
 	"github.copilot.command.logWorkbenchState": "Log Workbench State",
 	"github.copilot.command.showChatLogView": "Show Chat Debug View",
 	"github.copilot.command.showOutputChannel": "Show Output Channel",

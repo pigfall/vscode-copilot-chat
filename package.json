@@ -1555,8 +1555,8 @@
 			{
 				"icon": "$(copilot-large)",
 				"title": "Ask Copilot",
-				"content": "%github.copilot.viewsWelcome.toEnable%",
-				"when": "github.copilot-chat.toEnable"
+				"content": "%github.copilot.viewsWelcome.noModel%",
+				"when": "github.copilot-chat.noModel"
 			},
 			{
 				"icon": "$(copilot-large)",

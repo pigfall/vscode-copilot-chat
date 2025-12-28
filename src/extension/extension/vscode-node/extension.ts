@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { resolve } from '../../../util/vs/base/common/path';
@@ -38,12 +39,28 @@ export function activate(context: ExtensionContext, forceActivation?: boolean) {
 	// As we has made this extension as the vscode builtin extension, we didn't find a way to disable the builtin extension from code now.
 	// So we check the setting to do not really activate the extension by default.
 	// The default `github.copilot.chat.enabled` is false now.
-	if (!vscode.workspace.getConfiguration('github.copilot.chat').get<boolean>("enabled")) {
-		vscode.commands.executeCommand('setContext', "github.copilot-chat.toEnable", true);
+	try {
+		const output = execSync('cs llm model list -o json');
+		const models: Object[] = JSON.parse(output.toString());
+		if (models.length === 0) {
+			const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
+			outputChannel.appendLine(`No models are available. Please configure models in your organization's LLM settings.`);
+			vscode.commands.executeCommand('setContext', "github.copilot-chat.noModel", true);
+			return;
+		}
+	} catch (e) {
 		const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
-		outputChannel.appendLine(`Extension disabled. You could enable the extension by setting "github.copilot.chat.enabled": true in your settings. And refresh the web vscode`);
+		outputChannel.appendLine(`Failed to list models: ${e}`);
+		vscode.commands.executeCommand('setContext', "github.copilot-chat.listModelError", true);
 		return;
 	}
+
+	//if (!vscode.workspace.getConfiguration('github.copilot.chat').get<boolean>("enabled")) {
+	//	vscode.commands.executecommand('setcontext', "github.copilot-chat.toenable", true);
+	//	const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
+	//	outputChannel.appendLine(`Extension disabled. You could enable the extension by setting "github.copilot.chat.enabled": true in your settings. And refresh the web vscode`);
+	//	return;
+	//}
 
 	return baseActivate({
 		context,
