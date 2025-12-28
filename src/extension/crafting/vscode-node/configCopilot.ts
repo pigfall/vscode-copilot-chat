@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
+import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
 import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { TaskSingler } from '../../../util/common/taskSingler';
 import { createTracer, ITracer } from '../../../util/common/tracing';
@@ -21,6 +22,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@ICraftingModelService private readonly _modelService: ICraftingModelService,
 		@ILogService private readonly _logService: ILogService,
+		@IExperimentationService private readonly _expService: IExperimentationService,
 	) {
 		super();
 		this._infoTracer = createTracer(['crafting'], (msg) => this._logService.info(msg));
@@ -58,11 +60,22 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			return;
 		}
 
-		const model = models[0];
+		let model: CraftingModel | undefined;
+		const specifiedModel = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName);
+		if (specifiedModel) {
+			const providerAndModelName = specifiedModel.split(':', 2);
+			if (providerAndModelName.length === 2) {
+				model = models.find((m) => {
+					return m.provider === providerAndModelName[0] && m.name === providerAndModelName[1];
+				});
+			}
+		}
+		if (!model) {
+			model = models[0];
+		}
 		const nesURL = `http://${craftingLLMAPIHost}/chat/completions`;
 		Promise.all(
 			[
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsUnification, true),
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL),
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`),
 				this._configurationService.setConfig(ConfigKey.InlineEditsEnabled, true),
@@ -137,14 +150,14 @@ export class CraftingConfigCopilotContribution extends Disposable {
 	}
 
 	private deactivateFIMCompletion(reason: String) {
-		const ghCompletionEnabled = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider);
-		if (!ghCompletionEnabled) {
+		const enabled = this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
+		if (!enabled) { // Has been disabled. Do nothing.
 			this._infoTracer.trace(`Deactivated FIM completion: ${reason}`);
 			return;
 		}
 
 		this._infoTracer.trace(`Deactivating FIM completion: ${reason}`);
-		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider, false).then(
+		this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionEnabled, false).then(
 			() => {
 
 				this._infoTracer.trace(`Deactivated FIM completion`);
@@ -156,14 +169,15 @@ export class CraftingConfigCopilotContribution extends Disposable {
 	}
 
 	private deactivateNES(reason: String) {
-		const enabled = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsUnification);
+		const enabled = this._configurationService.getConfig(ConfigKey.Internal.NESEnabled);
 		if (!enabled) {
 			this._infoTracer.trace(`Deactivated NES: ${reason}`);
 			return;
 		}
 
 		this._infoTracer.trace(`Deactivating NES: ${reason}`);
-		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsUnification, false).then(
+		// The ConfigKey.InlineEditsEnabled really control the next edit suggesion.
+		this._configurationService.setConfig(ConfigKey.InlineEditsEnabled, false).then(
 			() => {
 				this._infoTracer.trace(`Deactivated NES`);
 			},
@@ -179,7 +193,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		Promise.all(
 			[
 				this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionModelName, `${provider}:${modelName}`),
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider, true),
+				this._configurationService.setConfig(ConfigKey.Internal.FIMCompletionEnabled, true),
 			]
 		).then(
 			() => this._infoTracer.trace(`Activated the FIM completion with model: ${provider}:${modelName}`),

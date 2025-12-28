@@ -2088,11 +2088,6 @@
 						"default":true,
 						"description": "config this to decide if enable the next edit suggestion"
 					},
-					"github.copilot.chat.advanced.inlineEdits.unification":{
-						"type":"boolean",
-						"default":false,
-						"description": "This is auto configed by the extension, user should not config this manually"
-					},
 					"github.copilot.chat.advanced.inlineEdits.githubCompletionsProvider.enabled":{
 						"type":"boolean",
 						"default":false,

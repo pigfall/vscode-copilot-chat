@@ -34,7 +34,7 @@ export class CompletionsCoreContribution extends Disposable {
 
 		this._register(autorun(reader => {
 			const unificationStateValue = unificationState.read(reader);
-			const configEnabled = configurationService.getConfig<boolean>(ConfigKey.Internal.InlineEditsEnableGhCompletionsProvider);
+			const configEnabled = configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
 
 			if (unificationStateValue?.codeUnification || configEnabled || this._copilotToken.read(reader)?.isNoAuthUser) {
 				const provider = this._getOrCreateProvider();
