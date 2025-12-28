@@ -64,7 +64,8 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			[
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsUnification, true),
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL),
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`)
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`),
+				this._configurationService.setConfig(ConfigKey.InlineEditsEnabled, true),
 			]
 		).then(
 			() => {
