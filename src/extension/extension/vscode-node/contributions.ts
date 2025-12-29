@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { AuthenticationContrib } from '../../authentication/vscode-node/authentication.contribution';
 import { BYOKContrib } from '../../byok/vscode-node/byokContribution';
 import { CraftingBYOKContrib } from '../../byok/vscode-node/craftingBYOKContribution';
 import { ChatQuotaContribution } from '../../chat/vscode-node/chatQuota.contribution';
@@ -63,7 +62,6 @@ export const vscodeNodeContributions: IExtensionContributionFactory[] = [
 	...vscodeContributions,
 	asContributionFactory(ConversationFeature),
 	workspaceChunkSearchContribution,
-	asContributionFactory(AuthenticationContrib),
 	chatBlockLanguageContribution,
 	asContributionFactory(LoggingActionsContrib),
 	asContributionFactory(ContextKeysContribution),
