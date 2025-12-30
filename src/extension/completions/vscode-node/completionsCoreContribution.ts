@@ -14,7 +14,6 @@ import { autorun, observableFromEvent } from '../../../util/vs/base/common/obser
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { createContext, setup } from '../../completions-core/vscode-node/completionsServiceBridges';
 import { CopilotInlineCompletionItemProvider } from '../../completions-core/vscode-node/extension/src/inlineCompletion';
-import { unificationStateObservable } from './completionsUnificationContribution';
 
 export class CompletionsCoreContribution extends Disposable {
 
@@ -30,13 +29,10 @@ export class CompletionsCoreContribution extends Disposable {
 	) {
 		super();
 
-		const unificationState = unificationStateObservable(this);
-
 		this._register(autorun(reader => {
-			const unificationStateValue = unificationState.read(reader);
 			const configEnabled = configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
 
-			if (unificationStateValue?.codeUnification || configEnabled || this._copilotToken.read(reader)?.isNoAuthUser) {
+			if (configEnabled) {
 				const provider = this._getOrCreateProvider();
 				reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
 			}

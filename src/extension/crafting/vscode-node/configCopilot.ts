@@ -57,6 +57,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 
 		if (models.length === 0) {
 			this._infoTracer.trace(`No models are available for next edit suggestion`);
+			// The inline completion provider has been registered, but as we unset the next edit suggestion model, the request will not be sent.
 			this.configureNextEditSuggestionModel(undefined);
 			return;
 		}
@@ -112,6 +113,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 
 		if (!models || models.length === 0) {
 			this._infoTracer.trace(`No models are available for FIM completion`);
+			// The inline completion provider has been registered, but as we unset the fim model, the fim request will not be sent.
 			this.configureFIMCompletionModel(undefined);
 			return;
 		}

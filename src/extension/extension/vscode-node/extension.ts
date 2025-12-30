@@ -6,6 +6,7 @@
 import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
+import { OutputChannelName } from '../../../platform/log/vscode/outputChannelLogTarget';
 import { resolve } from '../../../util/vs/base/common/path';
 import { baseActivate } from '../vscode/extension';
 import { vscodeNodeContributions } from './contributions';
@@ -20,7 +21,6 @@ import { registerServices } from './services';
 // ###############################################################################################
 
 //#region TODO@bpasero this needs cleanup
-import { OutputChannelName } from '../../../platform/log/vscode/outputChannelLogTarget';
 import '../../intents/node/allIntents';
 
 function configureDevPackages() {

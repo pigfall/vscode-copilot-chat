@@ -500,7 +500,8 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 		const fimCompletionModel = ctx.configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName)
 		if (fimCompletionModel) {
 			request.model = fimCompletionModel;
-		}else{
+		} else {
+			// Do not send the request when we doesn't configure model for fim completion.
 			return 'not-sent';
 		}
 
