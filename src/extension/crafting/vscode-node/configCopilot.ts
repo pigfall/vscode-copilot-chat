@@ -62,6 +62,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			return;
 		}
 
+		// Select the model for next edit suggestion, using the specified one or defaulting to the first available.
 		let model: CraftingModel | undefined;
 		const specifiedModel = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName);
 		if (specifiedModel) {
@@ -86,6 +87,10 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		);
 	}
 
+	/**
+	 * Configures the model used for next edit suggestions.
+	 * @param model The crafting model to use, or undefined to disable.
+	 */
 	private configureNextEditSuggestionModel(model: CraftingModel | undefined) {
 		let value = "";
 		if (model) {
@@ -102,8 +107,10 @@ export class CraftingConfigCopilotContribution extends Disposable {
 
 	}
 
-
-	// Configure FIM Completion.
+	/**
+	 * Configures FIM (Fill-in-the-Middle) completion based on available models and configuration.
+	 * @param models Array of available crafting models.
+	 */
 	private configureFIMCompletion(models: CraftingModel[]) {
 		const enabled = this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
 		if (!enabled) {
@@ -146,6 +153,11 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		this.configureFIMCompletionModel(configurationModelObject);
 	}
 
+	/**
+	 * Automatically selects a suitable model for FIM completion.
+	 * Prefers gpt-3.5-turbo-instruct, falls back to the first available model.
+	 * @param models Array of available crafting models.
+	 */
 	private autoSelectFIMCompletionModel(models: CraftingModel[]) {
 		// Let's choose the gpt-3.5-turbo-instruct firstly.
 		const matchedModels = models.filter((model) => {
@@ -163,6 +175,10 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		return;
 	}
 
+	/**
+	 * Configures the model used for FIM completion.
+	 * @param model The crafting model to use, or undefined to disable.
+	 */
 	private configureFIMCompletionModel(model: CraftingModel | undefined) {
 		let value = "";
 		if (model) {
@@ -193,6 +209,11 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		super();
 	}
 
+	/**
+	 * Retrieves the list of available crafting models.
+	 * Caches the result to avoid repeated calls.
+	 * @returns Promise resolving to array of CraftingModel.
+	 */
 	async getModels(): Promise<CraftingModel[]> {
 		if (this._models) {
 			return this._models;
@@ -205,6 +226,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return models;
 	}
 
+	/**
+	 * Executes the command to list models from the crafting service.
+	 * @returns Promise resolving to array of CraftingModel.
+	 */
 	private async doGetModels(): Promise<CraftingModel[]> {
 		const execAsync = promisify(exec);
 		try {
@@ -217,6 +242,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		}
 	}
 
+	/**
+	 * Gets the cached models.
+	 * @returns Array of CraftingModel or undefined if not yet loaded.
+	 */
 	get models(): CraftingModel[] | undefined {
 		return this._models;
 	}

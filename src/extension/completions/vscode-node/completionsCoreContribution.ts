@@ -32,6 +32,10 @@ export class CompletionsCoreContribution extends Disposable {
 		this._register(autorun(reader => {
 			const configEnabled = configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
 
+			if (!this._copilotToken.read(reader)) {
+				return;
+			}
+
 			if (configEnabled) {
 				const provider = this._getOrCreateProvider();
 				reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
