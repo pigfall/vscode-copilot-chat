@@ -230,7 +230,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	 * Executes the command to list models from the crafting service.
 	 * @returns Promise resolving to array of CraftingModel.
 	 */
-	private async doGetModels(): Promise<CraftingModel[]> {
+	private async doGetModels(): Promise<CraftingModel[] | undefined> {
 		const execAsync = promisify(exec);
 		try {
 			const { stdout } = await execAsync('cs llm model list -o json');
@@ -238,7 +238,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			return models;
 		} catch (e) {
 			this.logService.error(`list model: ${e}`);
-			return [];
+			return undefined;
 		}
 	}
 
