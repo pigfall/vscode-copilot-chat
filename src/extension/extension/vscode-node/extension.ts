@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { OutputChannelName } from '../../../platform/log/vscode/outputChannelLogTarget';
@@ -21,6 +20,7 @@ import { registerServices } from './services';
 // ###############################################################################################
 
 //#region TODO@bpasero this needs cleanup
+import { CraftingModelService } from '../../crafting/vscode-node/configCopilot';
 import '../../intents/node/allIntents';
 
 function configureDevPackages() {
@@ -38,8 +38,7 @@ function configureDevPackages() {
 export function activate(context: ExtensionContext, forceActivation?: boolean) {
 	// Do not activate if there is not any model.
 	try {
-		const output = execSync('cs llm model list -o json');
-		const models: Object[] = JSON.parse(output.toString());
+		const models = CraftingModelService.getModels();
 		if (models.length === 0) {
 			const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
 			outputChannel.appendLine(`No models are available. Please configure models in your organization's LLM settings.`);

@@ -9,6 +9,15 @@ export interface ICraftingModelService {
 	readonly models: CraftingModel[] | undefined;
 }
 
+// The output of: `wsenv env setup`.
+export interface AgentSetup {
+	llm_config?: LLMConfig;
+}
+
+export interface LLMConfig {
+	models?: CraftingModel[];
+}
+
 export interface CraftingModel {
 	provider: string;
 	name: string;

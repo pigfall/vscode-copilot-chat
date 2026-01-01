@@ -1,5 +1,4 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
@@ -10,7 +9,7 @@ import { createTracer, ITracer } from '../../../util/common/tracing';
 import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
-import { CraftingModel, ICraftingModelService } from '../common/llmconfig';
+import { AgentSetup, CraftingModel, ICraftingModelService } from '../common/llmconfig';
 
 // The CraftingConfigCopilotContribution will use IConfigurationService to modify the configuration for copilot.
 export class CraftingConfigCopilotContribution extends Disposable {
@@ -226,16 +225,19 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return models;
 	}
 
+	static getModels(): CraftingModel[] {
+		const output = execSync('/opt/sandboxd/sbin/wsenv env setup');
+		const agent: AgentSetup = JSON.parse(output.toString());
+		return agent.llm_config?.models ?? [];
+	}
+
 	/**
 	 * Executes the command to list models from the crafting service.
 	 * @returns Promise resolving to array of CraftingModel.
 	 */
 	private async doGetModels(): Promise<CraftingModel[] | undefined> {
-		const execAsync = promisify(exec);
 		try {
-			const { stdout } = await execAsync('cs llm model list -o json');
-			const models: CraftingModel[] = JSON.parse(stdout);
-			return models;
+			return Promise.resolve(CraftingModelService.getModels());
 		} catch (e) {
 			this.logService.error(`list model: ${e}`);
 			return undefined;
