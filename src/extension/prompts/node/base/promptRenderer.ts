@@ -8,7 +8,6 @@ import type { ChatResponsePart, ChatResponseProgressPart, LanguageModelToolToken
 import { IAuthenticationService } from '../../../../platform/authentication/common/authentication';
 import { ChatLocation } from '../../../../platform/chat/common/commonTypes';
 import { toTextPart } from '../../../../platform/chat/common/globalStringUtils';
-import { IEndpointProvider } from '../../../../platform/endpoint/common/endpointProvider';
 import { ILogService } from '../../../../platform/log/common/logService';
 import { IChatEndpoint } from '../../../../platform/networking/common/networking';
 import { IRequestLogger } from '../../../../platform/requestLogger/node/requestLogger';
@@ -20,6 +19,7 @@ import { URI } from '../../../../util/vs/base/common/uri';
 import { IInstantiationService } from '../../../../util/vs/platform/instantiation/common/instantiation';
 import { ServiceCollection } from '../../../../util/vs/platform/instantiation/common/serviceCollection';
 import { ChatResponseReferencePart, Location, Uri } from '../../../../vscodeTypes';
+import { ICraftingModelService } from '../../../crafting/common/llmconfig';
 import { RendererVisualizations } from '../../../inlineChat/node/rendererVisualization';
 import { getUniqueReferences, PromptReference } from '../../../prompt/common/conversation';
 import { IBuildPromptContext } from '../../../prompt/common/intents';
@@ -214,8 +214,11 @@ export async function renderPromptElementJSON<P extends BasePromptElementProps>(
 	// todo@connor4312: we don't know what model the tool call will use, just assume GPT family
 	// todo@lramos15: We should pass in endpoint provider rather than doing invoke function, but this was easier
 	const endpoint = await instantiationService.invokeFunction((accessor) => {
-		return accessor.get(IEndpointProvider).getChatEndpoint('gpt-4.1');
+		return accessor.get(ICraftingModelService).currentChatEndpoint();
 	});
+	if (!endpoint) {
+		throw (new Error('no chat endpoint available'));
+	}
 	const hydratedInstaService = instantiationService.createChild(new ServiceCollection([IPromptEndpoint, endpoint]));
 	const renderer = new PromptRendererForJSON(ctor as any, props, tokenOptions, endpoint, hydratedInstaService);
 	return await renderer.renderElementJSON(token);

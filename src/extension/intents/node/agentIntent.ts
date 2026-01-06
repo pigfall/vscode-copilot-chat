@@ -72,14 +72,12 @@ export const getAgentTools = (instaService: IInstantiationService, request: vsco
 			allowTools[ToolName.MultiReplaceString] = learned.includes(ToolName.MultiReplaceString);
 			allowTools[ToolName.ApplyPatch] = learned.includes(ToolName.ApplyPatch);
 		} else {
-			allowTools[ToolName.EditFile] = true;
 			allowTools[ToolName.ReplaceString] = await modelSupportsReplaceString(model);
 			allowTools[ToolName.ApplyPatch] = await modelSupportsApplyPatch(model) && !!toolsService.getTool(ToolName.ApplyPatch);
 
 			if (allowTools[ToolName.ApplyPatch] && modelCanUseApplyPatchExclusively(model)) {
 				allowTools[ToolName.EditFile] = false;
 			}
-
 			if (await modelCanUseReplaceStringExclusively(model)) {
 				allowTools[ToolName.ReplaceString] = true;
 				allowTools[ToolName.EditFile] = false;
@@ -89,6 +87,8 @@ export const getAgentTools = (instaService: IInstantiationService, request: vsco
 				allowTools[ToolName.MultiReplaceString] = true;
 			}
 		}
+		allowTools[ToolName.EditFile] = false;
+		allowTools[ToolName.ApplyPatch] = true;
 
 		allowTools[ToolName.RunTests] = await testService.hasAnyTests();
 		allowTools[ToolName.CoreRunTask] = tasksService.getTasks().length > 0;

@@ -67,6 +67,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			}
 		};
 		const chatEndpoint = this._instantiationService.createInstance(OpenAIEndpoint, modelInfo, "", `http://${craftingLLMAPIHost}/chat/completions`);
+		this._craftingModelService.setChatEndpoint(chatEndpoint);
 		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}
 

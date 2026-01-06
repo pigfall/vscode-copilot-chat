@@ -1,3 +1,4 @@
+import { IChatEndpoint } from '../../../platform/networking/common/networking';
 import { createServiceIdentifier } from '../../../util/common/services';
 import { Event } from '../../../util/vs/base/common/event';
 
@@ -7,6 +8,8 @@ export interface ICraftingModelService {
 	readonly onDidModelQueried: Event<void>;
 	getModels(): Promise<CraftingModel[]>;
 	readonly models: CraftingModel[] | undefined;
+	currentChatEndpoint(): IChatEndpoint | undefined;
+	setChatEndpoint(endpoint: IChatEndpoint): void;
 }
 
 // The output of: `wsenv env setup`.

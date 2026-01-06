@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
+import { IChatEndpoint } from '../../../platform/networking/common/networking';
 import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
 import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { TaskSingler } from '../../../util/common/taskSingler';
@@ -199,6 +200,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 	private readonly _modelsQuerieddEmitter = this._register(new Emitter<void>());
 	readonly onDidModelQueried = this._modelsQuerieddEmitter.event;
+	private _currentChatEndpoint: IChatEndpoint | undefined;
 
 	private _models: CraftingModel[] | undefined;
 
@@ -206,6 +208,13 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		@ILogService private readonly logService: ILogService,
 	) {
 		super();
+	}
+
+	currentChatEndpoint(): IChatEndpoint | undefined {
+		return this._currentChatEndpoint;
+	}
+	setChatEndpoint(endpoint: IChatEndpoint): void {
+		this._currentChatEndpoint = endpoint;
 	}
 
 	/**
