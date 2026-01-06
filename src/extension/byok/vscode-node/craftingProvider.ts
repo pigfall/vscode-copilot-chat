@@ -61,6 +61,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 				family: model.family,
 				supports: {
 					streaming: true,
+					tool_calls: !!model.capabilities?.toolCalling || false,
 				},
 				tokenizer: TokenizerType.O200K,
 			}
