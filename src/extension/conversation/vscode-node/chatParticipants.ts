@@ -129,6 +129,7 @@ class ChatParticipants implements IDisposable {
 		return agent;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private registerWorkspaceAgent(): IDisposable {
 		const workspaceAgent = this.createAgent(workspaceAgentName, Intent.Workspace);
 
@@ -137,6 +138,7 @@ class ChatParticipants implements IDisposable {
 		return workspaceAgent;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private registerVSCodeAgent(): IDisposable {
 		const useInsidersIcon = vscode.env.appName.includes('Insiders') || vscode.env.appName.includes('OSS');
 		const vscodeAgent = this.createAgent(vscodeAgentName, Intent.VSCode);

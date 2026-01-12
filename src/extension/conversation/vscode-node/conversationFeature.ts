@@ -180,6 +180,7 @@ export class ConversationFeature implements IExtensionContribution {
 		return disposables;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private registerParticipantDetectionProvider() {
 		if ('registerChatParticipantDetectionProvider' in vscode.chat) {
 			const provider = this.instantiationService.createInstance(IntentDetector);

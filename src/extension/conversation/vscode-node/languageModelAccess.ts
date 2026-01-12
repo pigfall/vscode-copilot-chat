@@ -88,6 +88,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		}));
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideLanguageModelChatInfo(options: { silent: boolean }, token: vscode.CancellationToken): Promise<vscode.LanguageModelChatInformation[]> {
 		const session = await this._getToken();
 		if (!session) {
@@ -187,6 +188,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		return models;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideLanguageModelChatResponse(
 		model: vscode.LanguageModelChatInformation,
 		messages: Array<vscode.LanguageModelChatMessage | vscode.LanguageModelChatMessage2>,
@@ -205,6 +207,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		}, options.requestInitiator, progress, token);
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideTokenCount(
 		model: vscode.LanguageModelChatInformation,
 		text: string | vscode.LanguageModelChatMessage | vscode.LanguageModelChatMessage2,

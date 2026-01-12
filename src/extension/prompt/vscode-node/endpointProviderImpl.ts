@@ -14,6 +14,7 @@ import { CopilotChatEndpoint } from '../../../platform/endpoint/node/copilotChat
 import { EmbeddingEndpoint } from '../../../platform/endpoint/node/embeddingsEndpoint';
 import { IModelMetadataFetcher, ModelMetadataFetcher } from '../../../platform/endpoint/node/modelMetadataFetcher';
 import { applyExperimentModifications, ExperimentConfig, getCustomDefaultModelExperimentConfig, ProxyExperimentEndpoint } from '../../../platform/endpoint/node/proxyExperimentEndpoint';
+import { ExtensionContributedChatEndpoint } from '../../../platform/endpoint/vscode-node/extChatEndpoint';
 import { IEnvService } from '../../../platform/env/common/envService';
 import { ILogService } from '../../../platform/log/common/logService';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
@@ -21,10 +22,8 @@ import { IChatEndpoint, IEmbeddingsEndpoint } from '../../../platform/networking
 import { IRequestLogger } from '../../../platform/requestLogger/node/requestLogger';
 import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
 import { ITelemetryService } from '../../../platform/telemetry/common/telemetry';
-import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { TokenizerType } from '../../../util/common/tokenizer';
 import { IInstantiationService, ServicesAccessor } from '../../../util/vs/platform/instantiation/common/instantiation';
-import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
 
 
@@ -121,9 +120,9 @@ export class ProductionEndpointProvider implements IEndpointProvider {
 		}
 		let endpoint: IChatEndpoint;
 		if (typeof requestOrFamilyOrModel === 'string') {
-			const ep = this._craftingModelService.currentChatEndpoint();
-			if (ep) {
-				endpoint = ep;
+			const craftingChatEndpoint = this._craftingModelService.lastUsedChatEndpoint();
+			if (craftingChatEndpoint) {
+				endpoint = craftingChatEndpoint;
 			} else {
 				// The family case, resolve the chat model for the passed in family
 				let modelMetadata = await this._modelFetcher.getChatModelFromFamily(requestOrFamilyOrModel);
@@ -144,25 +143,13 @@ export class ProductionEndpointProvider implements IEndpointProvider {
 				// If we fail to resolve a model since this is panel we give GPT-4.1. This really should never happen as the picker is powered by the same service.
 				endpoint = modelMetadata ? this.getOrCreateChatEndpointInstance(modelMetadata) : await this.getChatEndpoint('gpt-4.1');
 			} else if (model) {
-				const modelInfo: IChatModelInformation = {
-					id: model.id,
-					name: model.id, // crafting chat completion requires the format `{provider}:{model_name}`
-					model_picker_enabled: true,
-					is_chat_default: false,
-					is_chat_fallback: false,
-					version: model.version,
-					capabilities: {
-						type: "chat",
-						family: model.family,
-						supports: {
-							streaming: true,
-							tool_calls: model.capabilities.supportsToolCalling,
-						},
-						tokenizer: TokenizerType.O200K,
-					}
-				};
-				endpoint = this._instantiationService.createInstance(OpenAIEndpoint, modelInfo, "", `http://${craftingLLMAPIHost}/chat/completions`);
-				this._craftingModelService.setChatEndpoint(endpoint);
+				const craftingModels = await this._craftingModelService.getModels();
+				const craftingModel = craftingModels.find(m => m.provider + ":" + m.name === model.id);
+				if (craftingModel) {
+					endpoint = this._craftingModelService.getOrCreateChatEndpoint(craftingModel);
+				} else {
+					endpoint = this._instantiationService.createInstance(ExtensionContributedChatEndpoint, model);
+				}
 			} else {
 				// No explicit family passed and no model picker = gpt-4.1 class model
 				endpoint = await this.getChatEndpoint('gpt-4.1');

@@ -1,18 +1,14 @@
 import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessage, LanguageModelChatMessage2, LanguageModelChatProvider, LanguageModelChatRequestMessage, LanguageModelResponsePart2, Progress, ProvideLanguageModelChatResponseOptions } from 'vscode';
-import { IChatModelInformation } from '../../../platform/endpoint/common/endpointProvider';
 import { ILogService } from '../../../platform/log/common/logService';
-import { craftingLLMAPIHost } from '../../../util/common/crafting';
-import { TokenizerType } from '../../../util/common/tokenizer';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
-import { OpenAIEndpoint } from '../node/openAIEndpoint';
 
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {
 	protected readonly _lmWrapper: CopilotLanguageModelWrapper;
 
 	constructor(
-		readonly _craftingModelService: ICraftingModelService,
+		protected readonly _craftingModelService: ICraftingModelService,
 		@ILogService protected readonly _logService: ILogService,
 		@IInstantiationService protected readonly _instantiationService: IInstantiationService,
 	) {
@@ -26,19 +22,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 				models.filter((model) => {
 					return model.purposes.includes("GENERIC");
 				}).map((model) => {
-					return {
-						id: model.provider + ":" + model.name,
-						name: model.name,
-						family: model.dialect?.model_class ?? "",
-						isDefault: models[0] === model,
-						version: model.dialect?.sub_class ?? "",
-						isUserSelectable: true,
-						maxInputTokens: 140000, // TODO
-						maxOutputTokens: 140000, // TODO
-						capabilities: {
-							toolCalling: true,// TODO do not hardcode
-						}
-					};
+					return this._craftingModelService.toLanguageModelChatInformation(model, models[0] === model);
 				})
 			);
 		} catch (err) {
@@ -48,26 +32,13 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	}
 
 	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
-
-		const modelInfo: IChatModelInformation = {
-			id: model.id,
-			name: model.id, // crafting chat completion requires the format `{provider}:{model_name}`
-			model_picker_enabled: true,
-			is_chat_default: false,
-			is_chat_fallback: false,
-			version: model.version,
-			capabilities: {
-				type: "chat",
-				family: model.family,
-				supports: {
-					streaming: true,
-					tool_calls: !!model.capabilities?.toolCalling || false,
-				},
-				tokenizer: TokenizerType.O200K,
-			}
-		};
-		const chatEndpoint = this._instantiationService.createInstance(OpenAIEndpoint, modelInfo, "", `http://${craftingLLMAPIHost}/chat/completions`);
-		this._craftingModelService.setChatEndpoint(chatEndpoint);
+		const models = await this._craftingModelService.getModels();
+		const m = models.find(m => m.provider + ":" + m.name === model.id);
+		if (!m) {
+			this._logService.error(`Model ${model.id} not found`);
+			return Promise.reject(`Model ${model.id} not found`);
+		}
+		const chatEndpoint = this._craftingModelService.getOrCreateChatEndpoint(m);
 		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}
 

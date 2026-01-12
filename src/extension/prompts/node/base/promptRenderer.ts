@@ -214,7 +214,7 @@ export async function renderPromptElementJSON<P extends BasePromptElementProps>(
 	// todo@connor4312: we don't know what model the tool call will use, just assume GPT family
 	// todo@lramos15: We should pass in endpoint provider rather than doing invoke function, but this was easier
 	const endpoint = await instantiationService.invokeFunction((accessor) => {
-		return accessor.get(ICraftingModelService).currentChatEndpoint();
+		return accessor.get(ICraftingModelService).lastUsedChatEndpoint();
 	});
 	if (!endpoint) {
 		throw (new Error('no chat endpoint available'));
