@@ -20,7 +20,7 @@ import { registerServices } from './services';
 // ###############################################################################################
 
 //#region TODO@bpasero this needs cleanup
-import { CraftingModelService } from '../../crafting/vscode-node/configCopilot';
+import { CraftingModelService } from '../../crafting/vscode-node/modelService';
 import '../../intents/node/allIntents';
 
 function configureDevPackages() {

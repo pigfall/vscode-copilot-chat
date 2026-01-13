@@ -74,7 +74,7 @@ import { FeedbackReporter } from '../../conversation/vscode-node/feedbackReporte
 import { IUserFeedbackService, UserFeedbackService } from '../../conversation/vscode-node/userActions';
 import { ConversationStore, IConversationStore } from '../../conversationStore/node/conversationStore';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
-import { CraftingModelService } from '../../crafting/vscode-node/configCopilot';
+import { CraftingModelService } from '../../crafting/vscode-node/modelService';
 import { IIntentService, IntentService } from '../../intents/node/intentService';
 import { INewWorkspacePreviewContentManager, NewWorkspacePreviewContentManagerImpl } from '../../intents/node/newIntent';
 import { ITestGenInfoStorage, TestGenInfoStorage } from '../../intents/node/testIntent/testInfoStorage';
