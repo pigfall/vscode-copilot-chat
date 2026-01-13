@@ -4,6 +4,7 @@ import { createServiceIdentifier } from '../../../util/common/services';
 import { Event } from '../../../util/vs/base/common/event';
 
 export const ICraftingModelService = createServiceIdentifier<ICraftingModelService>('ICraftingModelService');
+export const ICraftingModelSelectorService = createServiceIdentifier<ICraftingModelSelectorService>('ICraftingModelSelectorService');
 
 export interface ICraftingModelService {
 	readonly onDidModelQueried: Event<void>;
@@ -12,6 +13,11 @@ export interface ICraftingModelService {
 	lastUsedChatEndpoint(): IChatEndpoint | undefined;
 	getOrCreateChatEndpoint(model: CraftingModel): IChatEndpoint;
 	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation;
+}
+
+export interface ICraftingModelSelectorService {
+	fimModel(allModels: CraftingModel[]): CraftingModel | undefined;
+	nesModel(allModels: CraftingModel[]): CraftingModel | undefined;
 }
 
 // The output of: `wsenv env setup`.
@@ -32,4 +38,5 @@ export interface CraftingModel {
 		model_class?: string;
 		sub_class?: string;
 	};
+	aliases?: string[];
 }

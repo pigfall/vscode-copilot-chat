@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { ILogService } from '../../../platform/log/common/logService';
-import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
-import { craftingLLMAPIHost } from '../../../util/common/crafting';
 import { createTracer, ITracer } from '../../../util/common/tracing';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
-import { CraftingModel, ICraftingModelService } from '../common/llmconfig';
+import { CraftingModel, ICraftingModelSelectorService, ICraftingModelService } from '../common/llmconfig';
 
 // The CraftingConfigCopilotContribution will use IConfigurationService to modify the configuration for copilot.
 export class CraftingConfigCopilotContribution extends Disposable {
@@ -17,8 +15,8 @@ export class CraftingConfigCopilotContribution extends Disposable {
 	constructor(
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@ICraftingModelService private readonly _modelService: ICraftingModelService,
+		@ICraftingModelSelectorService private readonly _modelSelector: ICraftingModelSelectorService,
 		@ILogService private readonly _logService: ILogService,
-		@IExperimentationService private readonly _expService: IExperimentationService,
 	) {
 		super();
 		this._infoTracer = createTracer(['crafting'], (msg) => this._logService.info(msg));
@@ -45,63 +43,24 @@ export class CraftingConfigCopilotContribution extends Disposable {
 
 	// Configure Next Edit Suggestion.
 	private configureNextEditSuggestion(models: CraftingModel[]) {
-		const enabled = this._configurationService.getExperimentBasedConfig(ConfigKey.InlineEditsEnabled, this._expService);
+		const enabled = this._configurationService.getConfig(ConfigKey.Internal.NESCompletionEnabled);
 		if (!enabled) {
-			this._infoTracer.trace(`Next edit suggestion is disabled`);
 			return;
 		}
-
-		if (models.length === 0) {
-			this._infoTracer.trace(`No models are available for next edit suggestion`);
-			// The inline completion provider has been registered, but as we unset the next edit suggestion model, the request will not be sent.
-			this.configureNextEditSuggestionModel(undefined);
-			return;
-		}
-
-		// Select the model for next edit suggestion, using the specified one or defaulting to the first available.
-		let model: CraftingModel | undefined;
-		const specifiedModel = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName);
-		if (specifiedModel) {
-			const providerAndModelName = specifiedModel.split(':', 2);
-			if (providerAndModelName.length === 2) {
-				model = models.find((m) => {
-					return m.provider === providerAndModelName[0] && m.name === providerAndModelName[1];
-				});
-			}
-		}
-		if (!model) {
-			model = models[0];
-		}
-		const nesURL = `http://${craftingLLMAPIHost}/chat/completions`;
-		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderUrl, nesURL).then(
-			() => {
-				this.configureNextEditSuggestionModel(model);
-			},
-			(e) => {
-				this._errorTracer.trace(`Failed to set xtab provider url: ${e}`);
-			},
-		);
-	}
-
-	/**
-	 * Configures the model used for next edit suggestions.
-	 * @param model The crafting model to use, or undefined to disable.
-	 */
-	private configureNextEditSuggestionModel(model: CraftingModel | undefined) {
-		let value = "";
+		// select a NES model.
+		const model = this._modelSelector.nesModel(models);
 		if (model) {
-			value = `${model.provider}:${model.name}`;
+			this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`).then(
+				() => {
+					this._infoTracer.trace(`Use ${model.provider}:${model.name} as next edit suggestion model`);
+				},
+				(e) => {
+					this._errorTracer.trace(`Failed to set ${model.provider}:${model.name} as next edit suggestion model: ${e}`);
+				},
+			);
 		}
-		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, value).then(
-			() => {
-				this._infoTracer.trace(`Use ${value} as next edit suggestion model`);
-			},
-			(e) => {
-				this._errorTracer.trace(`Failed to set ${value} as next edit suggestion model: ${e}`);
-			}
-		);
-
 	}
+
 
 	/**
 	 * Configures FIM (Fill-in-the-Middle) completion based on available models and configuration.
