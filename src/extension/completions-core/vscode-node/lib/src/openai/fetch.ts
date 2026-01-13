@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ClientHttp2Stream } from 'http2';
-import { ConfigKey } from '../../../../../../platform/configuration/common/configurationService';
 import { CancellationToken as ICancellationToken } from '../../../types/src';
+import { ServiceContainer } from '../../../utils';
 import { CopilotToken, CopilotTokenManager } from '../auth/copilotTokenManager';
 import { onCopilotToken } from '../auth/copilotTokenNotifier';
 import { Context } from '../context';
@@ -497,9 +497,11 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 			stream: true, // Always true: non streaming requests are not supported by this proxy
 			extra: params.extra,
 		};
-		const fimCompletionModel = ctx.configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName)
-		if (fimCompletionModel) {
-			request.model = fimCompletionModel;
+		const svcs = ctx.get(ServiceContainer);
+		const models = await svcs.modelService.getModels();
+		const fimModel = svcs.modelSelector.fimModel(models);
+		if (fimModel) {
+			request.model = `${fimModel.provider}:${fimModel.name}`;
 		} else {
 			// Do not send the request when we doesn't configure model for fim completion.
 			return 'not-sent';

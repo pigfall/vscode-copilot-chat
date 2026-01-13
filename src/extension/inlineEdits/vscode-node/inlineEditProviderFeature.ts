@@ -58,9 +58,11 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 		if (copilotToken.isCompletionsQuotaExceeded) {
 			return false;
 		}
-		if (!this._configurationService.getConfig(ConfigKey.Internal.NESCompletionEnabled)) {
+		// Disable if user explicitly disabled NES in vscode settings.
+		if (!this._configurationService.getConfig(ConfigKey.NESCompletionEnabled)) {
 			return false;
 		}
+		// Disable if no FIM model is available.
 		const fimModel = this._craftingModelSelectorService.nesModel(this._craftingModels.read(reader) ?? []);
 		if (!fimModel) {
 			return false;
@@ -101,8 +103,6 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 
 		this._register(autorun(reader => {
 			if (!this.inlineEditsEnabled.read(reader)) { return; }
-
-			this._logService.info('Activating NES Inline Edit Completion');
 
 			const logger = reader.store.add(this._instantiationService.createInstance(InlineEditLogger));
 
@@ -151,6 +151,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				groupId: 'nes',
 				excludes,
 			}));
+			this._logService.info(`NES Inline Edit Completion Provider Registered: ${provider.displayName}`);
 
 			if (TRIGGER_INLINE_EDIT_ON_ACTIVE_EDITOR_CHANGE) {
 				const lastEditTimeTracker = new LastEditTimeTracker(model.workspace);

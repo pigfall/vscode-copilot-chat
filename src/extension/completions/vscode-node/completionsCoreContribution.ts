@@ -3,43 +3,56 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
 import { languages } from 'vscode';
 import { IAuthenticationService } from '../../../platform/authentication/common/authentication';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
-import { IExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
-import { craftingLLMCopilotHost } from '../../../util/common/crafting';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observableInternal';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { createContext, setup } from '../../completions-core/vscode-node/completionsServiceBridges';
 import { CopilotInlineCompletionItemProvider } from '../../completions-core/vscode-node/extension/src/inlineCompletion';
+import { ICraftingModelSelectorService, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ILogService } from '../../../platform/log/common/logService';
 
 export class CompletionsCoreContribution extends Disposable {
 
 	private _provider: CopilotInlineCompletionItemProvider | undefined;
 
 	private readonly _copilotToken = observableFromEvent(this, this.authenticationService.onDidAuthenticationChange, () => this.authenticationService.copilotToken);
+	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
 
 	constructor(
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 		@IConfigurationService configurationService: IConfigurationService,
-		@IExperimentationService experimentationService: IExperimentationService,
 		@IAuthenticationService private readonly authenticationService: IAuthenticationService,
+		@ICraftingModelService private readonly _modelService: ICraftingModelService,
+		@ICraftingModelSelectorService private readonly _modelSelector: ICraftingModelSelectorService,
+		@ILogService private readonly _logService: ILogService,
 	) {
 		super();
 
 		this._register(autorun(reader => {
-			const configEnabled = configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled);
+			const configEnabled = configurationService.getConfig(ConfigKey.FIMCompletionEnabled);
 
+			// Disable if user explicitly disabled FIM in vscode settings.
+			if (!configEnabled) {
+				return;
+			}
+
+			// Disable if our placholder copilot token has not been acquired.
 			if (!this._copilotToken.read(reader)) {
 				return;
 			}
 
-			if (configEnabled) {
-				const provider = this._getOrCreateProvider();
-				reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
+			const models = this._models.read(reader);
+			// Disable if no FIM model is available.
+			if (!this._modelSelector.fimModel(models || [])) {
+				return;
 			}
+
+			const provider = this._getOrCreateProvider();
+			reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
+			this._logService.info('FIM Completion Provider registered');
 		}));
 	}
 
@@ -48,7 +61,6 @@ export class CompletionsCoreContribution extends Disposable {
 			const ctx = this._instantiationService.invokeFunction(createContext);
 			this._register(setup(ctx));
 			this._provider = this._register(new CopilotInlineCompletionItemProvider(ctx));
-			vscode.workspace.getConfiguration('github.copilot').update('internal.completionsUrl', `http://proxy.individual.githubcopilot.com.${craftingLLMCopilotHost}`);
 		}
 		return this._provider;
 	}

@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IConfigurationService } from '../../../../../platform/configuration/common/configurationService';
 
 /**
  * The type of a constructor that can be passed to `.get()` in order to receive
@@ -27,11 +26,6 @@ class UnregisteredContextError extends Error {
  */
 export class Context {
 	private instances = new Map<Ctor<unknown>, unknown>();
-	constructor(
-		readonly configurationService: IConfigurationService,
-	) {
-
-	}
 
 	/**
 	 * Returns the instance associated with the given constructor. Throws if there

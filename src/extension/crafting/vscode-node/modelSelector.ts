@@ -12,19 +12,19 @@ export class CraftingModelSelector {
 	}
 	fimModel(allModels: CraftingModel[]): CraftingModel | undefined {
 		// Check if FIM completion is enabled.
-		if (!this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionEnabled)) {
+		if (!this._configurationService.getConfig(ConfigKey.FIMCompletionEnabled)) {
 			return undefined;
 		}
 		// Select the FIM model.
-		return this.findModel(this._configurationService.getConfig(ConfigKey.Internal.FIMCompletionModelName), 'coding_fim', allModels);
+		return this.findModel(this._configurationService.getConfig(ConfigKey.FIMCompletionModelName), 'coding_fim', allModels);
 	}
 	nesModel(allModels: CraftingModel[]): CraftingModel | undefined {
 		// Check if NES completion is enabled.
-		if (!this._configurationService.getConfig(ConfigKey.Internal.NESCompletionEnabled)) {
+		if (!this._configurationService.getConfig(ConfigKey.NESCompletionEnabled)) {
 			return undefined;
 		}
 		// Select the NES model.
-		return this.findModel(this._configurationService.getConfig(ConfigKey.Internal.NESCompletionModelName), 'coding_nes', allModels);
+		return this.findModel(this._configurationService.getConfig(ConfigKey.NESCompletionModelName), 'coding_nes', allModels);
 	}
 
 	// Select the model according with client configuration and model purpose.

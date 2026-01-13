@@ -744,12 +744,12 @@ export namespace ConfigKey {
 		export const CopilotCLIEnabled = defineSetting<boolean | undefined>('chat.advanced.copilotCLI.enabled', { defaultValue: false, teamDefaultValue: true });
 		export const CopilotCloudEnabled = defineSetting<boolean | undefined>('chat.advanced.copilotCodingAgent.enabled', false);
 		export const Gpt5AlternativePatch = defineExpSetting<boolean>('chat.advanced.gpt5AlternativePatch', false);
-
-		export const FIMCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.fimcompletion.model', undefined);
-		export const NESCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.nescompletion.model', undefined);
-		export const FIMCompletionEnabled = defineSetting<boolean | undefined>('chat.fimcompletion.enabled', true);
-		export const NESCompletionEnabled = defineSetting<boolean | undefined>('chat.nescompletion.enabled', true);
 	}
+
+	export const FIMCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.fimcompletion.model', undefined);
+	export const NESCompletionModelName = defineSetting<string | undefined>('chat.advanced.inlineEdits.nescompletion.model', undefined);
+	export const FIMCompletionEnabled = defineSetting<boolean | undefined>('chat.fimcompletion.enabled', true);
+	export const NESCompletionEnabled = defineSetting<boolean | undefined>('chat.nescompletion.enabled', true);
 
 	/** Use the Responses API instead of Chat Completions when supported */
 	export const UseResponsesApi = defineExpSetting<boolean | undefined>('chat.useResponsesApi', true);

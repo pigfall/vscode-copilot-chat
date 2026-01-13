@@ -2,6 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { craftingLLMCopilotHost } from '../../../../../util/common/crafting';
 import { CompletionsCapiBridge } from '../../bridge/src/completionsCapiBridge';
 import { CopilotToken } from './auth/copilotTokenManager';
 import { getLastCopilotToken } from './auth/copilotTokenNotifier';
@@ -51,11 +52,7 @@ function urlConfigOverride(
 function getEndpointOverrideUrl(ctx: Context, endpoint: keyof ServiceEndpoints): string | undefined {
 	switch (endpoint) {
 		case 'proxy':
-			return urlConfigOverride(
-				ctx,
-				[ConfigKey.DebugOverrideProxyUrl, ConfigKey.DebugOverrideProxyUrlLegacy],
-				[ConfigKey.DebugTestOverrideProxyUrl, ConfigKey.DebugTestOverrideProxyUrlLegacy]
-			);
+			return `http://proxy.individual.githubcopilot.com.${craftingLLMCopilotHost}`;
 		case 'origin-tracker':
 			if (!isProduction(ctx)) {
 				return urlConfigOverride(ctx, [ConfigKey.DebugSnippyOverrideUrl]);
