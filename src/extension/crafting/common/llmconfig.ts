@@ -44,6 +44,8 @@ export interface CraftingModel {
 export type CraftingModelAlias = string;
 export type CraftingModelId = `${string}:${string}`;
 export enum CraftingModelPurpose {
+	Generic = 'GENERIC',
+	Coding = 'CODING',
 	CodingFIM = 'CODING_FIM',
 	CodingNES = 'CODING_NES',
 }

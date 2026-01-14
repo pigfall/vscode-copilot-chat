@@ -29,7 +29,11 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	}
 
 	getOrCreateChatEndpoint(model: CraftingModel): IChatEndpoint {
-		const id = `${model.provider}:${model.name}`;
+		let id = `${model.provider}:${model.name}`;
+		if (model.provider === "" && model.name === 'AUTO') {
+			id = model.purposes[0];
+		}
+		const name = id;
 		let endpoint = this.chatEndpointMap.get(id);
 		if (endpoint) {
 			this._lastUsed = endpoint;
@@ -39,7 +43,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			OpenAIEndpoint,
 			{
 				id: id,
-				name: id, // crafting chat completion requires the format `{provider}:{model_name}`
+				name: name,
 				model_picker_enabled: true,
 				is_chat_default: false,
 				is_chat_fallback: false,
@@ -128,8 +132,12 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	}
 
 	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation {
+		let id = `${model.provider}:${model.name}`;
+		if (model.provider === "" && model.name === "AUTO") { // special handling for AUTO model
+			id = model.purposes[0];
+		}
 		return {
-			id: model.provider + ":" + model.name,
+			id: id,
 			name: model.name,
 			family: model.dialect?.model_class ?? "",
 			isDefault: isDefault,

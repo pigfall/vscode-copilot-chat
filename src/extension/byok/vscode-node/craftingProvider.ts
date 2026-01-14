@@ -2,7 +2,7 @@ import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessa
 import { ILogService } from '../../../platform/log/common/logService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
-import { ICraftingModelService } from '../../crafting/common/llmconfig';
+import { CraftingModel, CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
 
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {
 	protected readonly _lmWrapper: CopilotLanguageModelWrapper;
@@ -17,14 +17,29 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 
 	async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		try {
-			const models = await this._craftingModelService.getModels();
-			return Promise.resolve(
-				models.filter((model) => {
-					return model.purposes.includes("GENERIC");
-				}).map((model) => {
-					return this._craftingModelService.toLanguageModelChatInformation(model, models[0] === model);
-				})
-			);
+			const allModels = await this._craftingModelService.getModels();
+			const models = allModels.filter((model) => {
+				return (model.purposes.includes(CraftingModelPurpose.Generic) || model.purposes.includes(CraftingModelPurpose.Coding));
+			});
+			if (models.length === 0) {
+				return Promise.resolve([]);
+			}
+			let purpose = CraftingModelPurpose.Generic;
+			let model = models.find((m) => { return m.purposes.includes(CraftingModelPurpose.Coding); });
+			if (model) {
+				purpose = CraftingModelPurpose.Coding;
+			} else {
+				model = models[0];
+			}
+			const modelStr = JSON.stringify(model);
+			const autoModel = JSON.parse(modelStr) as typeof model;
+			autoModel.provider = '';
+			autoModel.name = 'AUTO';
+			autoModel.purposes = [purpose];
+			models.unshift(autoModel);
+			return models.map((m) => {
+				return this._craftingModelService.toLanguageModelChatInformation(model, models[0] === model);
+			});
 		} catch (err) {
 			this._logService.error(`get models failed ${err} `);
 			throw err.message;
@@ -33,11 +48,17 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 
 	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
 		const models = await this._craftingModelService.getModels();
-		const m = models.find(m => m.provider + ":" + m.name === model.id);
+		let m: CraftingModel | undefined;
+		if (model.id.split(':').length === 1) { // AUTO model
+			m = models.find((m) => { return m.provider !== '' && m.name === 'AUTO' && m.purposes.includes(model.id as CraftingModelPurpose); });
+		} else {
+			m = models.find(m => m.provider + ":" + m.name === model.id);
+		}
 		if (!m) {
 			this._logService.error(`Model ${model.id} not found`);
 			return Promise.reject(`Model ${model.id} not found`);
 		}
+
 		const chatEndpoint = this._craftingModelService.getOrCreateChatEndpoint(m);
 		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}
