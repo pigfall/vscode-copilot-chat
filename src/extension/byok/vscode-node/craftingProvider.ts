@@ -31,14 +31,15 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			} else {
 				model = models[0];
 			}
+			// Add a AUTO model to model list. The AUTO model will be the default selected model. And it will use purpose as the model name when calling chat completion api.
 			const modelStr = JSON.stringify(model);
-			const autoModel = JSON.parse(modelStr) as typeof model;
+			const autoModel = JSON.parse(modelStr) as typeof model; // Copy the model.
 			autoModel.provider = '';
 			autoModel.name = 'AUTO';
 			autoModel.purposes = [purpose];
 			models.unshift(autoModel);
 			return models.map((m) => {
-				return this._craftingModelService.toLanguageModelChatInformation(model, models[0] === model);
+				return this._craftingModelService.toLanguageModelChatInformation(m, m === autoModel);
 			});
 		} catch (err) {
 			this._logService.error(`get models failed ${err} `);
