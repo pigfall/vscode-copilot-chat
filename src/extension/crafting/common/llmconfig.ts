@@ -16,8 +16,8 @@ export interface ICraftingModelService {
 }
 
 export interface ICraftingModelSelectorService {
-	fimModel(allModels: CraftingModel[]): CraftingModel | undefined;
-	nesModel(allModels: CraftingModel[]): CraftingModel | undefined;
+	fimModel(allModels: CraftingModel[]): CraftingModelVarient | undefined;
+	nesModel(allModels: CraftingModel[]): CraftingModelVarient | undefined;
 }
 
 // The output of: `wsenv env setup`.
@@ -39,4 +39,19 @@ export interface CraftingModel {
 		sub_class?: string;
 	};
 	aliases?: string[];
+}
+
+export type CraftingModelAlias = string;
+export type CraftingModelId = `${string}:${string}`;
+export enum CraftingModelPurpose {
+	CodingFIM = 'CODING_FIM',
+	CodingNES = 'CODING_NES',
+}
+
+// This is a model name that should be used in call chat request.
+export type CraftingModelVarient = CraftingModelId | CraftingModelAlias | CraftingModelPurpose;
+
+// Get the model id in format `{provider}:{model_name}` from CraftingModel.
+export function craftingModelIdFrom(model: CraftingModel): CraftingModelId {
+	return `${model.provider}:${model.name}`;
 }

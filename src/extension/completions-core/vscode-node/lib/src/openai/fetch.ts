@@ -501,7 +501,7 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 		const models = await svcs.modelService.getModels();
 		const fimModel = svcs.modelSelector.fimModel(models);
 		if (fimModel) {
-			request.model = `${fimModel.provider}:${fimModel.name}`;
+			request.model = fimModel;
 		} else {
 			// Do not send the request when we doesn't configure model for fim completion.
 			return 'not-sent';

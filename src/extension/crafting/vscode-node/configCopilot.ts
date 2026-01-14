@@ -53,12 +53,12 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			this._infoTracer.trace(`NES completion is disabled becuase of no available models`);
 			return;
 		}
-		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, `${model.provider}:${model.name}`).then(
+		this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, model).then(
 			() => {
-				this._infoTracer.trace(`Use ${model.provider}:${model.name} as next edit suggestion model`);
+				this._infoTracer.trace(`Use ${model} as next edit suggestion model`);
 			},
 			(e) => {
-				this._errorTracer.trace(`Failed to set ${model.provider}:${model.name} as next edit suggestion model: ${e}`);
+				this._errorTracer.trace(`Failed to set ${model} as next edit suggestion model: ${e}`);
 			},
 		);
 	}

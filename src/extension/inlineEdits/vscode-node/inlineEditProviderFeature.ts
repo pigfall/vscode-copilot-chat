@@ -151,7 +151,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				groupId: 'nes',
 				excludes,
 			}));
-			this._logService.info(`NES Inline Edit Completion Provider Registered: ${provider.displayName}`);
+			this._logService.info(`NES Inline Edit Completion Provider registered: ${provider.displayName}`);
 
 			if (TRIGGER_INLINE_EDIT_ON_ACTIVE_EDITOR_CHANGE) {
 				const lastEditTimeTracker = new LastEditTimeTracker(model.workspace);
@@ -187,8 +187,6 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				logContext.recordingBookmark = model.debugRecorder.createBookmark();
 				void commands.executeCommand(reportFeedbackCommandId, { logContext });
 			}));
-
-			this._logService.info('Activated NES Inline Edit Completion');
 		}));
 
 		constructorTracer.returns();
