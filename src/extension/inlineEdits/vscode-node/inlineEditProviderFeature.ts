@@ -51,6 +51,8 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 	private readonly _craftingModels = observableFromEvent(this, this._craftingModelService.onDidModelQueried, () => this._craftingModelService.models);
 	private readonly _nesCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.NESCompletionEnabled);
 
+	private registered = false;
+
 	// This decides whether registering NES completion provider.
 	public readonly inlineEditsEnabled = derived(this, (reader) => {
 		const copilotToken = this._copilotToken.read(reader);
@@ -103,6 +105,24 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 
 		commands.executeCommand('setContext', useEnhancedNotebookNESContextKey, enableEnhancedNotebookNES);
 
+		this._craftingModelService.getModels();
+		// The nes completion provider will use InlineEditsXtabProviderModelName as final model name to fetch suggestions.
+		// We watch the configuration and crafting models to keep them in sync.
+		this._register(autorun((reader) => {
+			const models = this._craftingModels.read(reader);
+			if (models === undefined) { // models are undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
+				setTimeout(() => {
+					this._craftingModelService.getModels();
+				}, 1000 * 3);
+				return;
+			}
+			const nesModel = this._craftingModelSelectorService.nesModel(models);
+			const xtabModel = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName);
+			if (nesModel !== xtabModel) {
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, nesModel);
+			}
+		}));
+
 		// This is a place to register the NES completion provider.
 		// It will be triggered when:
 		// - The configuration `ConfigKey.NESCompletionEnabled` changes.
@@ -110,6 +130,11 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 		// - The crafting models were fetched.
 		this._register(autorun(reader => {
 			if (!this.inlineEditsEnabled.read(reader)) { return; }
+
+			if (this.registered) {
+				this._logService.debug('NES Inline Edit Completion Provider is already registered.');
+				return;
+			}
 
 			const logger = reader.store.add(this._instantiationService.createInstance(InlineEditLogger));
 
@@ -159,6 +184,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				excludes,
 			}));
 			this._logService.info(`NES Inline Edit Completion Provider registered: ${provider.displayName}`);
+			this.registered = true;
 
 			if (TRIGGER_INLINE_EDIT_ON_ACTIVE_EDITOR_CHANGE) {
 				const lastEditTimeTracker = new LastEditTimeTracker(model.workspace);

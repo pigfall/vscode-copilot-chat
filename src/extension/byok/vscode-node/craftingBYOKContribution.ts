@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { lm } from 'vscode';
 import { ILogService } from '../../../platform/log/common/logService';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
@@ -15,6 +16,8 @@ export class CraftingBYOKContrib extends Disposable implements IExtensionContrib
 	) {
 		super();
 		this.registerModelProvider();
+		// Trigger to refresh the model list which is showed in chat pannel model picker.
+		vscode.lm.selectChatModels();
 	}
 
 	private registerModelProvider() {

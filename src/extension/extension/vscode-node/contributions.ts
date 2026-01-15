@@ -19,7 +19,6 @@ import { FeedbackCommandContribution } from '../../conversation/vscode-node/feed
 import { LanguageModelAccess } from '../../conversation/vscode-node/languageModelAccess';
 import { LogWorkspaceStateContribution } from '../../conversation/vscode-node/logWorkspaceState';
 import { RemoteAgentContribution } from '../../conversation/vscode-node/remoteAgents';
-import { CraftingConfigCopilotContribution } from '../../crafting/vscode-node/configCopilot';
 import { LanguageModelProxyContrib } from '../../externalAgents/vscode-node/lmProxyContrib';
 import { WalkthroughCommandContribution } from '../../getting-started/vscode-node/commands';
 import * as newWorkspaceContribution from '../../getting-started/vscode-node/newWorkspace.contribution';
@@ -110,7 +109,6 @@ export const vscodeNodeChatContributions: IExtensionContributionFactory[] = [
 	asContributionFactory(BYOKContrib),
 	asContributionFactory(McpSetupCommands),
 	asContributionFactory(LanguageModelProxyContrib),
-	asContributionFactory(CraftingConfigCopilotContribution),
 	asContributionFactory(CraftingBYOKContrib),
 	newWorkspaceContribution,
 ];
