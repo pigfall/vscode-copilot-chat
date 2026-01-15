@@ -2082,24 +2082,24 @@
 					"github.copilot.chat.fimcompletion.enabled":{
 						"type":"boolean",
 						"default":true,
-						"description": "config this to decide if enable the FIM completion"
+						"description": "Controls if enable the FIM completion"
 					},
 					"github.copilot.chat.nescompletion.enabled":{
 						"type":"boolean",
 						"default":true,
-						"description": "config this to decide if enable the NES completion"
+						"description": "Controls if enable the NES completion"
 					},
 					"github.copilot.chat.advanced.inlineEdits.fimcompletion.model":{
 						"type":"string",
-						"description": "config this to choose FIM completion model. Example: `openai:gpt-3.5-turbo-instruct`. If the model does not exist in the org, the extension will auto select one"
+						"description": "Set FIM completion model. The value could be model id in format `provider:model_name` or the model alias. Example: `openai:gpt-3.5-turbo-instruct`, `alias_example`. If the model does not exist in the org, the extension will auto select one"
 					},
 					"github.copilot.chat.advanced.inlineEdits.nescompletion.model":{
 						"type":"string",
-						"description": "config this to choose nes completion model. Example: `openai:gpt-4.1`. If the model does not exist in the org, the extension will auto select one"
+						"description": "Set next edit suggestion completion model.  The value could be model id in format `provider:model_name` or the model alias. Example: `openai:gpt-4.1`. If the model does not exist in the org, the extension will auto select one"
 					},
 					"github.copilot.chat.advanced.inlineEdits.xtabProvider.modelName":{
 						"type":"string",
-						"description": "this is auto configed by the extension, user should not config this manually"
+						"description": "This is auto configed by the extension, user should not config this manually"
 					},
 					"github.copilot.chat.codeGeneration.useInstructionFiles": {
 						"type": "boolean",

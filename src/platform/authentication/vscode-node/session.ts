@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { AuthenticationGetSessionOptions, AuthenticationSession, AuthenticationSessionsChangeEvent, authentication } from 'vscode';
+import { AuthenticationGetSessionOptions, AuthenticationSession, AuthenticationSessionsChangeEvent } from 'vscode';
 import { AuthProviderId, ConfigKey, IConfigurationService } from '../../configuration/common/configurationService';
 
 export const SESSION_LOGIN_MESSAGE = 'You are not signed in to GitHub. Please sign in to use Copilot.';

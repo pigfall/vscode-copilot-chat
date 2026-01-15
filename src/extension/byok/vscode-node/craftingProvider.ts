@@ -4,6 +4,7 @@ import { IInstantiationService } from '../../../util/vs/platform/instantiation/c
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
 import { CraftingModel, CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
 
+// The CraftingModelProvider implements vscode LanguageModelChatProvider.
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {
 	protected readonly _lmWrapper: CopilotLanguageModelWrapper;
 
@@ -15,6 +16,8 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 		this._lmWrapper = this._instantiationService.createInstance(CopilotLanguageModelWrapper);
 	}
 
+	// The provideLanguageModelChatInformation returns the models will be shown in the chat model picker.
+	// Models with purpose 'GENERIC' or 'CODING' will be listed and extra 'AUTO' model will be added.
 	async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		try {
 			const allModels = await this._craftingModelService.getModels();
@@ -50,8 +53,12 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 		}
 	}
 
+	// Implement provideLanguageModelChatResponse.
 	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
 		const models = await this._craftingModelService.getModels();
+
+
+		// Find the CraftingModel according with the argument LanguageModelChatInformation.
 		let m: CraftingModel | undefined;
 		// Find the model by id.
 		if (model.name === 'AUTO' && model.id.split(':').length === 1) { // AUTO model
@@ -64,11 +71,13 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			return Promise.reject(`Model ${model.id} not found`);
 		}
 
+		// Create the endppoint by CraftingModel and call CopilotLanguageModelWrapper to provide response.
 		const chatEndpoint = this._craftingModelService.getOrCreateChatEndpoint(m);
 		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}
 
 	async provideTokenCount(model: LanguageModelChatInformation, text: string | LanguageModelChatRequestMessage, token: CancellationToken): Promise<number> {
+		// TODO
 		throw new Error("Unimplmented");
 	}
 }

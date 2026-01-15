@@ -1,3 +1,5 @@
+// This file defines the interfaces and types for Crafting LLM configuration.
+
 import type { LanguageModelChatInformation } from 'vscode';
 import { IChatEndpoint } from '../../../platform/networking/common/networking';
 import { createServiceIdentifier } from '../../../util/common/services';

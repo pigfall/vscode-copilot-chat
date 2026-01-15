@@ -6,6 +6,7 @@ import { IExtensionContribution } from '../../common/contributions';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
 import { CraftingModelProvider } from './craftingProvider';
 
+// The CraftingBYOKContrib regiters the crafting model provider to vscode language model chat provider.
 export class CraftingBYOKContrib extends Disposable implements IExtensionContribution {
 	constructor(
 		@ILogService private readonly _logService: ILogService,
@@ -17,8 +18,8 @@ export class CraftingBYOKContrib extends Disposable implements IExtensionContrib
 	}
 
 	private registerModelProvider() {
-		this._logService.info('Crafting Model Provider was registered!');
 		const provider = this._instantiationService.createInstance(CraftingModelProvider, this._lmconfigs);
 		lm.registerLanguageModelChatProvider("crafting", provider);
+		this._logService.info('Crafting Model Provider was registered!');
 	}
 }

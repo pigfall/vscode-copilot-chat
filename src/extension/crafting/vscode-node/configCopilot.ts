@@ -6,7 +6,8 @@ import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
 import { CraftingModel, ICraftingModelSelectorService, ICraftingModelService } from '../common/llmconfig';
 
-// The CraftingConfigCopilotContribution will use IConfigurationService to modify the configuration for copilot.
+// The CraftingConfigCopilotContribution will use IConfigurationService to modify the configuration(vscode setting.json) for copilot.
+// It only modify the configuration(vscode setting.json), do not activate any copilot feature.
 export class CraftingConfigCopilotContribution extends Disposable {
 	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
 	private readonly _infoTracer: ITracer;
@@ -25,13 +26,13 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		this._infoTracer.trace("CraftingConfigCopilotContribution contributed");
 		this._register(autorun((reader) => {
 			const models = this._models.read(reader);
-			if (models === undefined) {
+			if (models === undefined) { // models is undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
 				setTimeout(() => {
 					this._modelService.getModels();
 				}, 1000 * 3);
 				return;
 			}
-			// Trigger to refresh the model list which is showed in model picker.
+			// Trigger to refresh the model list which is showed in chat pannel model picker.
 			vscode.lm.selectChatModels();
 			// Sync Next Edit Suggestion Model.
 			this.syncNextEditSuggestionModel(models);

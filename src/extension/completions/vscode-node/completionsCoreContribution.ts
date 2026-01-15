@@ -31,6 +31,13 @@ export class CompletionsCoreContribution extends Disposable {
 	) {
 		super();
 
+		// This is the palce to register(activate) the FIM completion provider.
+		// It will be trigger when:
+		// 1. The configuration "crafting.fimCompletionEnabled" changes.
+		//    So if user change it from 'false' to 'true', the provider will be registered(if condition met) and do not reload vsocde.
+		//    But if user change it from 'true' to 'false', as the provider may have been registered, so it need to reload vscode.
+		// 2. The copilot token has been acquired.
+		// 3. The crafting models were fetched.
 		this._register(autorun(reader => {
 			const configEnabled = configurationService.getConfig(ConfigKey.FIMCompletionEnabled);
 

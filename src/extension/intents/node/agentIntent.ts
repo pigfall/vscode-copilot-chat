@@ -87,6 +87,7 @@ export const getAgentTools = (instaService: IInstantiationService, request: vsco
 				allowTools[ToolName.MultiReplaceString] = true;
 			}
 		}
+
 		allowTools[ToolName.EditFile] = false;
 		allowTools[ToolName.ApplyPatch] = true;
 

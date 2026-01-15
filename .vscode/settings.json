@@ -5,7 +5,7 @@
 		"editor.defaultFormatter": "vscode.typescript-language-features",
 		"editor.formatOnSave": true,
 		"editor.codeActionsOnSave": {
-			"source.organizeImports": "never"
+			"source.organizeImports": "never" // Avoid the unnessesary changes of import order.
 		}
 	},
 	"[typescriptreact]": {
