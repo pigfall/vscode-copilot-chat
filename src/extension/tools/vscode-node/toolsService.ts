@@ -15,6 +15,14 @@ import { BaseToolsService } from '../common/toolsService';
 export class ToolsService extends BaseToolsService {
 	declare _serviceBrand: undefined;
 
+	private disabledTools: Map<ToolName, boolean> = new Map(
+		[
+			// Disable codebase tool for now. The codebase tool need to read the remote repo.
+			// We need to login github to get the token.
+			[ToolName.Codebase, true],
+		]
+	);
+
 	private readonly _copilotTools: Lazy<Map<ToolName, ICopilotTool<any>>>;
 	private readonly _contributedToolCache: {
 		input: readonly vscode.LanguageModelToolInformation[];
@@ -95,6 +103,10 @@ export class ToolsService extends BaseToolsService {
 		const toolMap = new Map(this.tools.map(t => [t.name, t]));
 
 		return this.tools.filter(tool => {
+			if (this.disabledTools.has(tool.name as ToolName)) {
+				return false;
+			}
+
 			// 0. Check if the tool was disabled via the tool picker. If so, it must be disabled here
 			const toolPickerSelection = request.tools.get(getContributedToolName(tool.name));
 			if (toolPickerSelection === false) {
