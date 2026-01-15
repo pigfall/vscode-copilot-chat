@@ -18,12 +18,15 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		try {
 			const allModels = await this._craftingModelService.getModels();
+			// Filter the models that has purpose 'GENERIC' or 'CODING'
 			const models = allModels.filter((model) => {
 				return (model.purposes.includes(CraftingModelPurpose.Generic) || model.purposes.includes(CraftingModelPurpose.Coding));
 			});
 			if (models.length === 0) {
 				return Promise.resolve([]);
 			}
+
+			// Choose 'CODING' purpose model ,if not, use 'GENERIC' model.
 			let purpose = CraftingModelPurpose.Generic;
 			let model = models.find((m) => { return m.purposes.includes(CraftingModelPurpose.Coding); });
 			if (model) {
@@ -50,8 +53,9 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
 		const models = await this._craftingModelService.getModels();
 		let m: CraftingModel | undefined;
-		if (model.id.split(':').length === 1) { // AUTO model
-			m = models.find((m) => { return m.provider !== '' && m.name === 'AUTO' && m.purposes.includes(model.id as CraftingModelPurpose); });
+		// Find the model by id.
+		if (model.name === 'AUTO' && model.id.split(':').length === 1) { // AUTO model
+			m = models.find((m) => { return m.purposes.includes(model.id as CraftingModelPurpose); });
 		} else {
 			m = models.find(m => m.provider + ":" + m.name === model.id);
 		}
