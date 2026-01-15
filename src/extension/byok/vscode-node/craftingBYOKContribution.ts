@@ -6,7 +6,7 @@ import { IExtensionContribution } from '../../common/contributions';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
 import { CraftingModelProvider } from './craftingProvider';
 
-// The CraftingBYOKContrib regiters the crafting model provider to vscode language model chat provider.
+// The CraftingBYOKContrib regiters the crafting model provider to vscode.
 export class CraftingBYOKContrib extends Disposable implements IExtensionContribution {
 	constructor(
 		@ILogService private readonly _logService: ILogService,

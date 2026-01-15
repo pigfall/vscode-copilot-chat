@@ -54,21 +54,20 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	}
 
 	// Implement provideLanguageModelChatResponse.
-	async provideLanguageModelChatResponse(model: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
+	async provideLanguageModelChatResponse(inputModel: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
 		const models = await this._craftingModelService.getModels();
-
 
 		// Find the CraftingModel according with the argument LanguageModelChatInformation.
 		let m: CraftingModel | undefined;
 		// Find the model by id.
-		if (model.name === 'AUTO' && model.id.split(':').length === 1) { // AUTO model
-			m = models.find((m) => { return m.purposes.includes(model.id as CraftingModelPurpose); });
+		if (inputModel.name === 'AUTO' && inputModel.id.split(':').length === 1) { // AUTO model
+			m = models.find((m) => { return m.purposes.includes(inputModel.id as CraftingModelPurpose); });
 		} else {
-			m = models.find(m => m.provider + ":" + m.name === model.id);
+			m = models.find(m => m.provider + ":" + m.name === inputModel.id);
 		}
 		if (!m) {
-			this._logService.error(`Model ${model.id} not found`);
-			return Promise.reject(`Model ${model.id} not found`);
+			this._logService.error(`Model ${inputModel.id} not found`);
+			return Promise.reject(`Model ${inputModel.id} not found`);
 		}
 
 		// Create the endppoint by CraftingModel and call CopilotLanguageModelWrapper to provide response.

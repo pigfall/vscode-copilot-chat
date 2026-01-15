@@ -20,10 +20,11 @@ export class CompletionsCoreContribution extends Disposable {
 
 	private readonly _copilotToken = observableFromEvent(this, this.authenticationService.onDidAuthenticationChange, () => this.authenticationService.copilotToken);
 	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
+	private readonly _fimCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.FIMCompletionEnabled);
 
 	constructor(
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
-		@IConfigurationService configurationService: IConfigurationService,
+		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@IAuthenticationService private readonly authenticationService: IAuthenticationService,
 		@ICraftingModelService private readonly _modelService: ICraftingModelService,
 		@ICraftingModelSelectorService private readonly _modelSelector: ICraftingModelSelectorService,
@@ -31,22 +32,22 @@ export class CompletionsCoreContribution extends Disposable {
 	) {
 		super();
 
-		// This is the palce to register(activate) the FIM completion provider.
-		// It will be trigger when:
-		// 1. The configuration "crafting.fimCompletionEnabled" changes.
-		//    So if user change it from 'false' to 'true', the provider will be registered(if condition met) and do not reload vsocde.
+		// This is the place to register(activate) the FIM completion provider.
+		// It will be triggered when:
+		// 1. The configuration `ConfigKey.FIMCompletionEnabled` changes.
+		//    If user change it from 'false' to 'true', the provider will be registered(if condition met) and do not reload vsocde.
 		//    But if user change it from 'true' to 'false', as the provider may have been registered, so it need to reload vscode.
 		// 2. The copilot token has been acquired.
 		// 3. The crafting models were fetched.
 		this._register(autorun(reader => {
-			const configEnabled = configurationService.getConfig(ConfigKey.FIMCompletionEnabled);
+			const configEnabled = this._fimCompletionEnabled.read(reader);
 
 			// Disable if user explicitly disabled FIM in vscode settings.
 			if (!configEnabled) {
 				return;
 			}
 
-			// Disable if our placholder copilot token has not been acquired.
+			// Disable if our placeholder copilot token has not been acquired.
 			if (!this._copilotToken.read(reader)) {
 				return;
 			}

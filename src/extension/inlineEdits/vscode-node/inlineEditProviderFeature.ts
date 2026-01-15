@@ -49,7 +49,9 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 	private readonly _excludedProviders = this._configurationService.getExperimentBasedConfigObservable(ConfigKey.Internal.InlineEditsExcludedProviders, this._expService).map(v => v ? v.split(',').map(v => v.trim()).filter(v => v !== '') : []);
 	private readonly _copilotToken = observableFromEvent(this, this._authenticationService.onDidAuthenticationChange, () => this._authenticationService.copilotToken);
 	private readonly _craftingModels = observableFromEvent(this, this._craftingModelService.onDidModelQueried, () => this._craftingModelService.models);
+	private readonly _nesCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.NESCompletionEnabled);
 
+	// This decides whether registering NES completion provider.
 	public readonly inlineEditsEnabled = derived(this, (reader) => {
 		const copilotToken = this._copilotToken.read(reader);
 		if (copilotToken === undefined) {
@@ -59,7 +61,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 			return false;
 		}
 		// Disable if user explicitly disabled NES in vscode settings.
-		if (!this._configurationService.getConfig(ConfigKey.NESCompletionEnabled)) {
+		if (!this._nesCompletionEnabled.read(reader)) {
 			return false;
 		}
 		// Disable if no FIM model is available.
@@ -101,6 +103,11 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 
 		commands.executeCommand('setContext', useEnhancedNotebookNESContextKey, enableEnhancedNotebookNES);
 
+		// This is a place to register the NES completion provider.
+		// It will be triggered when:
+		// - The configuration `ConfigKey.NESCompletionEnabled` changes.
+		// - The copilot token has been acquired.
+		// - The crafting models were fetched.
 		this._register(autorun(reader => {
 			if (!this.inlineEditsEnabled.read(reader)) { return; }
 
