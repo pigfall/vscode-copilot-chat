@@ -3,13 +3,14 @@ import { ConfigKey, IConfigurationService } from '../../../platform/configuratio
 import { ILogService } from '../../../platform/log/common/logService';
 import { createTracer, ITracer } from '../../../util/common/tracing';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
-import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
+import { autorun, IReader, observableFromEvent } from '../../../util/vs/base/common/observable';
 import { CraftingModel, ICraftingModelSelectorService, ICraftingModelService } from '../common/llmconfig';
 
 // The CraftingConfigCopilotContribution will use IConfigurationService to modify the configuration(vscode setting.json) for copilot.
 // It only modify the configuration(vscode setting.json), do not activate any copilot feature.
 export class CraftingConfigCopilotContribution extends Disposable {
 	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
+	private readonly _nesCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.NESCompletionEnabled);
 	private readonly _infoTracer: ITracer;
 	private readonly _errorTracer: ITracer;
 
@@ -26,7 +27,7 @@ export class CraftingConfigCopilotContribution extends Disposable {
 		this._infoTracer.trace("CraftingConfigCopilotContribution contributed");
 		this._register(autorun((reader) => {
 			const models = this._models.read(reader);
-			if (models === undefined) { // models is undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
+			if (models === undefined) { // models are undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
 				setTimeout(() => {
 					this._modelService.getModels();
 				}, 1000 * 3);
@@ -35,15 +36,15 @@ export class CraftingConfigCopilotContribution extends Disposable {
 			// Trigger to refresh the model list which is showed in chat pannel model picker.
 			vscode.lm.selectChatModels();
 			// Sync Next Edit Suggestion Model.
-			this.syncNextEditSuggestionModel(models);
+			this.syncNextEditSuggestionModel(models, reader);
 		}));
 		this._modelService.getModels();
 	}
 
 	// The final NES model used is stored in ConfigKey.Internal.InlineEditsXtabProviderModelName.
 	// We configure it here according to user configuration and fetched models.
-	private syncNextEditSuggestionModel(models: CraftingModel[]) {
-		const enabled = this._configurationService.getConfig(ConfigKey.NESCompletionEnabled);
+	private syncNextEditSuggestionModel(models: CraftingModel[], reader: IReader | undefined) {
+		const enabled = this._nesCompletionEnabled.read(reader);
 		if (!enabled) {
 			this._infoTracer.trace(`NES completion is disabled`);
 			return;
