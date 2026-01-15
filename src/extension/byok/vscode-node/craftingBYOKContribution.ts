@@ -6,22 +6,37 @@ import { IInstantiationService } from '../../../util/vs/platform/instantiation/c
 import { IExtensionContribution } from '../../common/contributions';
 import { ICraftingModelService } from '../../crafting/common/llmconfig';
 import { CraftingModelProvider } from './craftingProvider';
+import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
 
 // The CraftingBYOKContrib regiters the crafting model provider to vscode.
 export class CraftingBYOKContrib extends Disposable implements IExtensionContribution {
+
+	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
+
 	constructor(
 		@ILogService private readonly _logService: ILogService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
-		@ICraftingModelService private readonly _lmconfigs: ICraftingModelService,
+		@ICraftingModelService private readonly _modelService: ICraftingModelService,
 	) {
 		super();
+
+		this._register(autorun((reader) => {
+			const models = this._models.read(reader);
+			if (models === undefined) { // models are undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
+				setTimeout(() => {
+					this._modelService.getModels();
+				}, 1000 * 3);
+				return;
+			}
+			// Trigger to refresh the model list which is showed in chat pannel model picker.
+			vscode.lm.selectChatModels();
+		}));
+
 		this.registerModelProvider();
-		// Trigger to refresh the model list which is showed in chat pannel model picker.
-		vscode.lm.selectChatModels();
 	}
 
 	private registerModelProvider() {
-		const provider = this._instantiationService.createInstance(CraftingModelProvider, this._lmconfigs);
+		const provider = this._instantiationService.createInstance(CraftingModelProvider, this._modelService);
 		lm.registerLanguageModelChatProvider("crafting", provider);
 		this._logService.info('Crafting Model Provider was registered!');
 	}
