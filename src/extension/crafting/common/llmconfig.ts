@@ -6,21 +6,19 @@ import { createServiceIdentifier } from '../../../util/common/services';
 import { Event } from '../../../util/vs/base/common/event';
 
 export const ICraftingModelService = createServiceIdentifier<ICraftingModelService>('ICraftingModelService');
-export const ICraftingModelSelectorService = createServiceIdentifier<ICraftingModelSelectorService>('ICraftingModelSelectorService');
 
 export interface ICraftingModelService {
-	readonly onDidModelQueried: Event<void>;
+	readonly onModelsChanged: Event<void>;
 	getModels(): Promise<CraftingModel[]>;
 	readonly models: CraftingModel[] | undefined;
+	getModelByPurpose(purpose: CraftingModelPurpose, ignoreCache?: boolean): Promise<CraftingModel | null>;
+	readonly purposeModelMap: Map<CraftingModelPurpose, CraftingModel>;
+	readonly onPurposeModelMapChanged: Event<void>;
 	lastUsedChatEndpoint(): IChatEndpoint | undefined;
 	getOrCreateChatEndpoint(model: CraftingModel): IChatEndpoint;
 	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation;
 }
 
-export interface ICraftingModelSelectorService {
-	fimModel(allModels: CraftingModel[]): CraftingModelVarient | undefined;
-	nesModel(allModels: CraftingModel[]): CraftingModelVarient | undefined;
-}
 
 // The output of: `wsenv env setup`.
 export interface AgentSetup {
@@ -43,8 +41,6 @@ export interface CraftingModel {
 	aliases?: string[];
 }
 
-export type CraftingModelAlias = string;
-export type CraftingModelId = `${string}:${string}`;
 export enum CraftingModelPurpose {
 	Generic = 'GENERIC',
 	Coding = 'CODING',
@@ -52,10 +48,8 @@ export enum CraftingModelPurpose {
 	CodingNES = 'CODING_NES',
 }
 
-// This is a model name that should be used in call chat request.
-export type CraftingModelVarient = CraftingModelId | CraftingModelAlias | CraftingModelPurpose;
 
 // Get the model id in format `{provider}:{model_name}` from CraftingModel.
-export function craftingModelIdFrom(model: CraftingModel): CraftingModelId {
+export function craftingModelIdFrom(model: CraftingModel): string {
 	return `${model.provider}:${model.name}`;
 }

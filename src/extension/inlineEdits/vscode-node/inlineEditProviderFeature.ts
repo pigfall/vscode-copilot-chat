@@ -23,7 +23,7 @@ import { IInstantiationService } from '../../../util/vs/platform/instantiation/c
 import { IExtensionContribution } from '../../common/contributions';
 import { CompletionsProvider } from '../../completions/vscode-node/completionsProvider';
 import { unificationStateObservable } from '../../completions/vscode-node/completionsUnificationContribution';
-import { ICraftingModelSelectorService, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { craftingModelIdFrom, CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
 import { TelemetrySender } from '../node/nextEditProviderTelemetry';
 import { InlineEditDebugComponent, reportFeedbackCommandId } from './components/inlineEditDebugComponent';
 import { LogContextRecorder } from './components/logContextRecorder';
@@ -34,6 +34,7 @@ import { InlineEditLogger } from './parts/inlineEditLogger';
 import { LastEditTimeTracker } from './parts/lastEditTimeTracker';
 import { VSCodeWorkspace } from './parts/vscodeWorkspace';
 import { makeSettable } from './utils/observablesUtils';
+import { doUntilSuccess } from '../../../util/common/crafting';
 
 const TRIGGER_INLINE_EDIT_ON_ACTIVE_EDITOR_CHANGE = false; // otherwise, eg, NES would trigger just when going through search results
 const useEnhancedNotebookNESContextKey = 'github.copilot.chat.enableEnhancedNotebookNES';
@@ -48,7 +49,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 	private readonly _yieldToCopilot = this._configurationService.getExperimentBasedConfigObservable(ConfigKey.Internal.InlineEditsYieldToCopilot, this._expService);
 	private readonly _excludedProviders = this._configurationService.getExperimentBasedConfigObservable(ConfigKey.Internal.InlineEditsExcludedProviders, this._expService).map(v => v ? v.split(',').map(v => v.trim()).filter(v => v !== '') : []);
 	private readonly _copilotToken = observableFromEvent(this, this._authenticationService.onDidAuthenticationChange, () => this._authenticationService.copilotToken);
-	private readonly _craftingModels = observableFromEvent(this, this._craftingModelService.onDidModelQueried, () => this._craftingModelService.models);
+	private readonly _purposeModels = observableFromEvent(this, this._craftingModelService.onPurposeModelMapChanged, () => this._craftingModelService.purposeModelMap);
 	private readonly _nesCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.NESCompletionEnabled);
 
 	private registered = false;
@@ -67,7 +68,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 			return false;
 		}
 		// Disable if no FIM model is available.
-		const fimModel = this._craftingModelSelectorService.nesModel(this._craftingModels.read(reader) ?? []);
+		const fimModel = this._craftingModelService.getModelByPurpose(CraftingModelPurpose.CodingNES);
 		if (!fimModel) {
 			return false;
 		}
@@ -86,7 +87,6 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 
 	constructor(
 		@ICraftingModelService private readonly _craftingModelService: ICraftingModelService,
-		@ICraftingModelSelectorService private readonly _craftingModelSelectorService: ICraftingModelSelectorService,
 		@IVSCodeExtensionContext private readonly _vscodeExtensionContext: IVSCodeExtensionContext,
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@IAuthenticationService private readonly _authenticationService: IAuthenticationService,
@@ -105,22 +105,16 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 
 		commands.executeCommand('setContext', useEnhancedNotebookNESContextKey, enableEnhancedNotebookNES);
 
-		this._craftingModelService.getModels();
 		// The nes completion provider will use InlineEditsXtabProviderModelName as final model name to fetch suggestions.
 		// We watch the configuration and crafting models to keep them in sync.
 		this._register(autorun((reader) => {
-			const models = this._craftingModels.read(reader);
-			if (models === undefined) { // models are undefined means we failed to fetch models or not fetched yet. Set a timer to retry.
-				setTimeout(() => {
-					this._craftingModelService.getModels();
-				}, 1000 * 3);
+			const models = this._purposeModels.read(reader);
+			const nesModel = models.get(CraftingModelPurpose.CodingNES);
+			if (!nesModel) {
+				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, undefined);
 				return;
 			}
-			const nesModel = this._craftingModelSelectorService.nesModel(models);
-			const xtabModel = this._configurationService.getConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName);
-			if (nesModel !== xtabModel) {
-				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, nesModel);
-			}
+			this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, craftingModelIdFrom(nesModel));
 		}));
 
 		// This is a place to register the NES completion provider.
@@ -221,6 +215,8 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				void commands.executeCommand(reportFeedbackCommandId, { logContext });
 			}));
 		}));
+
+		doUntilSuccess(() => this._craftingModelService.getModelByPurpose(CraftingModelPurpose.CodingNES));
 
 		constructorTracer.returns();
 	}

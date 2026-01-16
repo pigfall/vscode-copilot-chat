@@ -77,7 +77,7 @@ import { registerGhostTextDependencies } from './extension/src/ghostText/ghostTe
 import { CopilotStatusBar } from './extension/src/statusBar';
 import { ExtensionTextDocumentManager } from './extension/src/textDocumentManager';
 import { CompletionsCapiBridge } from './bridge/src/completionsCapiBridge';
-import { ICraftingModelSelectorService, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/llmconfig';
 import { ServiceContainer } from './utils';
 
 const bridges: any[] = [];
@@ -99,11 +99,10 @@ export function createContext(serviceAccessor: ServicesAccessor): Context {
 	const configurationService = serviceAccessor.get(IConfigurationService);
 	const experimentationService = serviceAccessor.get(IExperimentationService);
 	const craftingModelService = serviceAccessor.get(ICraftingModelService);
-	const craftingModelSelectorService = serviceAccessor.get(ICraftingModelSelectorService);
 
 	const ctx = new Context();
 
-	ctx.set(ServiceContainer, new ServiceContainer(craftingModelService, craftingModelSelectorService))
+	ctx.set(ServiceContainer, new ServiceContainer(craftingModelService))
 
 	// Bridges
 	for (const bridge of bridges) {

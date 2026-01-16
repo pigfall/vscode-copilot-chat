@@ -9,21 +9,28 @@ import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
-import { AgentSetup, CraftingModel, ICraftingModelService } from '../common/llmconfig';
+import { AgentSetup, CraftingModel, CraftingModelPurpose, ICraftingModelService } from '../common/llmconfig';
+import { IFetcherService } from '../../../platform/networking/common/fetcherService';
+import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 
 export class CraftingModelService extends Disposable implements ICraftingModelService {
 	private _taskSinger = new TaskSingler<any>();
 
-	private readonly _modelsQuerieddEmitter = this._register(new Emitter<void>());
-	readonly onDidModelQueried = this._modelsQuerieddEmitter.event;
+	private readonly _modelsChangedEmitter = this._register(new Emitter<void>());
+	readonly onModelsChanged = this._modelsChangedEmitter.event;
 	private _lastUsed: IChatEndpoint | undefined;
 
 	private _models: CraftingModel[] | undefined;
 	private chatEndpointMap: Map<string, IChatEndpoint> = new Map<string, IChatEndpoint>();
+	private _purposeModelMap: Map<CraftingModelPurpose, CraftingModel> = new Map<CraftingModelPurpose, CraftingModel>();
+	private readonly _purposeModelMapChangedEmitter = this._register(new Emitter<void>());
+	readonly onPurposeModelMapChanged = this._purposeModelMapChangedEmitter.event;
 
 	constructor(
 		@ILogService private readonly logService: ILogService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@IFetcherService private readonly fetcherService: IFetcherService,
 	) {
 		super();
 	}
@@ -74,6 +81,43 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return this._lastUsed;
 	}
 
+	async getModelByPurpose(purpose: CraftingModelPurpose, ignoreCache?: boolean): Promise<CraftingModel | null> {
+		if (!ignoreCache) {
+			const cached = this._purposeModelMap.get(purpose);
+			if (cached) {
+				return cached;
+			}
+		}
+
+		let specifiedModel: string | undefined;
+		switch (purpose) {
+			case CraftingModelPurpose.CodingFIM:
+				specifiedModel = this.configurationService.getConfig(ConfigKey.FIMCompletionModelName);
+				break;
+			case CraftingModelPurpose.CodingNES:
+				specifiedModel = this.configurationService.getConfig(ConfigKey.NESCompletionModelName);
+				break;
+		}
+		if (specifiedModel) {
+			const m = await this.findConfiguredModel(specifiedModel);
+			if (m) {
+				this._purposeModelMap.set(purpose, m);
+				this._purposeModelMapChangedEmitter.fire();
+				return m;
+			}
+		}
+
+		const model = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
+		if (model) {
+			this._purposeModelMap.set(purpose, model);
+		} else {
+			this._purposeModelMap.delete(purpose);
+		}
+		this._purposeModelMapChangedEmitter.fire();
+
+		return model;
+	}
+
 	/**
 	 * Retrieves the list of available crafting models.
 	 * Caches the result to avoid repeated calls.
@@ -86,9 +130,53 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 		const models = await this._taskSinger.getOrCreate("getModels", () => this.doGetModels());
 		this._models = models;
-		this._modelsQuerieddEmitter.fire();
-
+		this._modelsChangedEmitter.fire();
 		return models;
+	}
+
+	private async fetchModelByPurpose(purpose: CraftingModelPurpose): Promise<CraftingModel | null> {
+		try {
+			const resp = await this.fetcherService.fetch(`http://${craftingLLMAPIHost}/models/${purpose}`, { method: 'GET' });
+			if (resp.status === 404) {
+				this.logService.info(`no ${purpose} model available`);
+				return null;
+			}
+			if (!resp.ok) {
+				const content = await resp.text();
+				throw new Error(`fetch ${purpose} model failed: ${resp.status} ${content}`);
+			}
+			return JSON.parse(await resp.text());
+		} catch (e) {
+			this.logService.error(`fetch ${purpose} model: ${e}`);
+			throw e;
+		}
+
+	}
+
+	private async findConfiguredModel(value: string): Promise<CraftingModel | null> {
+		const allModels = await this.getModels();
+		const providerAndName = value.split(':', 2);
+
+		if (providerAndName.length === 2) { // The configuration value is in format `{provider}:{model_name}`.
+			const matched = allModels.find((m) => {
+				return m.provider === providerAndName[0] && m.name === providerAndName[1];
+			});
+			if (matched) {
+				return matched;
+			}
+		}
+
+		// The configuration value is an alias.
+		// Find the model with the alias.
+		const model = allModels.find((m) => {
+			return m.aliases?.find((alias) => {
+				return alias === value;
+			}) !== undefined;
+		});
+		if (!model) {
+			return null;
+		}
+		return model;
 	}
 
 	static getModels(): CraftingModel[] {
@@ -102,12 +190,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	 * @returns Promise resolving to array of CraftingModel.
 	 */
 	private async doGetModels(): Promise<CraftingModel[] | undefined> {
-		try {
-			return Promise.resolve(CraftingModelService.getModels());
-		} catch (e) {
-			this.logService.error(`list model: ${e}`);
-			return undefined;
-		}
+		return Promise.resolve(CraftingModelService.getModels());
 	}
 
 	/**
@@ -116,6 +199,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	 */
 	get models(): CraftingModel[] | undefined {
 		return this._models;
+	}
+
+	get purposeModelMap(): Map<CraftingModelPurpose, CraftingModel> {
+		return this._purposeModelMap;
 	}
 
 	maxOutputTokens(model: CraftingModel): number {

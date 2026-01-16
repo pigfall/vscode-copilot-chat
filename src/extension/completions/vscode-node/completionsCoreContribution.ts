@@ -11,15 +11,17 @@ import { autorun, observableFromEvent } from '../../../util/vs/base/common/obser
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { createContext, setup } from '../../completions-core/vscode-node/completionsServiceBridges';
 import { CopilotInlineCompletionItemProvider } from '../../completions-core/vscode-node/extension/src/inlineCompletion';
-import { ICraftingModelSelectorService, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
 import { ILogService } from '../../../platform/log/common/logService';
+import { doUntilSuccess } from '../../../util/common/crafting';
 
 export class CompletionsCoreContribution extends Disposable {
 
 	private _provider: CopilotInlineCompletionItemProvider | undefined;
+	private _registerd = false;
 
 	private readonly _copilotToken = observableFromEvent(this, this.authenticationService.onDidAuthenticationChange, () => this.authenticationService.copilotToken);
-	private readonly _models = observableFromEvent(this, this._modelService.onDidModelQueried, () => this._modelService.models);
+	private readonly _purposeModelMap = observableFromEvent(this, this._modelService.onPurposeModelMapChanged, () => this._modelService.purposeModelMap);
 	private readonly _fimCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.FIMCompletionEnabled);
 
 	constructor(
@@ -27,7 +29,6 @@ export class CompletionsCoreContribution extends Disposable {
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@IAuthenticationService private readonly authenticationService: IAuthenticationService,
 		@ICraftingModelService private readonly _modelService: ICraftingModelService,
-		@ICraftingModelSelectorService private readonly _modelSelector: ICraftingModelSelectorService,
 		@ILogService private readonly _logService: ILogService,
 	) {
 		super();
@@ -40,6 +41,9 @@ export class CompletionsCoreContribution extends Disposable {
 		// 2. The copilot token has been acquired.
 		// 3. The crafting models were fetched.
 		this._register(autorun(reader => {
+			if (this._registerd) {
+				return;
+			}
 			const configEnabled = this._fimCompletionEnabled.read(reader);
 
 			// Disable if user explicitly disabled FIM in vscode settings.
@@ -52,16 +56,18 @@ export class CompletionsCoreContribution extends Disposable {
 				return;
 			}
 
-			const models = this._models.read(reader);
-			// Disable if no FIM model is available.
-			if (!this._modelSelector.fimModel(models || [])) {
+			const fimModel = this._purposeModelMap.read(reader).get(CraftingModelPurpose.CodingFIM);
+			if (!fimModel) {
 				return;
 			}
 
 			const provider = this._getOrCreateProvider();
 			reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
 			this._logService.info('FIM Completion Provider registered');
+			this._registerd = true;
 		}));
+
+		doUntilSuccess(() => this._modelService.getModelByPurpose(CraftingModelPurpose.CodingFIM));
 	}
 
 	private _getOrCreateProvider() {
@@ -72,4 +78,5 @@ export class CompletionsCoreContribution extends Disposable {
 		}
 		return this._provider;
 	}
+
 }
