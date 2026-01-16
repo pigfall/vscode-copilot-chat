@@ -177,7 +177,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				groupId: 'nes',
 				excludes,
 			}));
-			this._logService.info(`NES Inline Edit Completion Provider registered: ${provider.displayName}`);
+			this._logService.info(`NES Inline Edit Completion Provider registered`);
 			this.registered = true;
 
 			if (TRIGGER_INLINE_EDIT_ON_ACTIVE_EDITOR_CHANGE) {

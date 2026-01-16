@@ -9,7 +9,7 @@ import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
-import { AgentSetup, CraftingModel, CraftingModelPurpose, ICraftingModelService } from '../common/llmconfig';
+import { AgentSetup, CraftingModel, craftingModelIdFrom, CraftingModelPurpose, ICraftingModelService } from '../common/llmconfig';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 
@@ -107,15 +107,19 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			}
 		}
 
-		const model = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
-		if (model) {
-			this._purposeModelMap.set(purpose, model);
+		const modelId = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
+		const models = await this.getModels();
+		const m = models.find((m) => {
+			return craftingModelIdFrom(m) === modelId;
+		});
+		if (m) {
+			this._purposeModelMap.set(purpose, m);
 		} else {
 			this._purposeModelMap.delete(purpose);
 		}
 		this._purposeModelMapChangedEmitter.fire();
 
-		return model;
+		return m ?? null;
 	}
 
 	/**
@@ -134,7 +138,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return models;
 	}
 
-	private async fetchModelByPurpose(purpose: CraftingModelPurpose): Promise<CraftingModel | null> {
+	private async fetchModelByPurpose(purpose: CraftingModelPurpose): Promise<string | null> {
 		try {
 			const resp = await this.fetcherService.fetch(`http://${craftingLLMAPIHost}/models/${purpose}`, { method: 'GET' });
 			if (resp.status === 404) {
@@ -145,7 +149,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 				const content = await resp.text();
 				throw new Error(`fetch ${purpose} model failed: ${resp.status} ${content}`);
 			}
-			return JSON.parse(await resp.text());
+			return JSON.parse(await resp.text()).id;
 		} catch (e) {
 			this.logService.error(`fetch ${purpose} model: ${e}`);
 			throw e;
