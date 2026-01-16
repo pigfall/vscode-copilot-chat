@@ -24,7 +24,7 @@ import { IExperimentationService } from '../../../platform/telemetry/common/null
 import { ITelemetryService } from '../../../platform/telemetry/common/telemetry';
 import { TokenizerType } from '../../../util/common/tokenizer';
 import { IInstantiationService, ServicesAccessor } from '../../../util/vs/platform/instantiation/common/instantiation';
-import { craftingModelIdFrom, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/llmconfig';
 
 
 
@@ -144,7 +144,7 @@ export class ProductionEndpointProvider implements IEndpointProvider {
 				endpoint = modelMetadata ? this.getOrCreateChatEndpointInstance(modelMetadata) : await this.getChatEndpoint('gpt-4.1');
 			} else if (model) {
 				const craftingModels = await this._craftingModelService.getModels();
-				const craftingModel = craftingModels.find(m => craftingModelIdFrom(m) === model.id);
+				const craftingModel = craftingModels.find(m => m.id === model.id);
 				if (craftingModel) {
 					endpoint = this._craftingModelService.getOrCreateChatEndpoint(craftingModel);
 				} else {

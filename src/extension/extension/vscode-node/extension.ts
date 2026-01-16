@@ -35,10 +35,10 @@ function configureDevPackages() {
 }
 //#endregion
 
-export function activate(context: ExtensionContext, forceActivation?: boolean) {
+export async function activate(context: ExtensionContext, forceActivation?: boolean) {
 	// Do not activate if there is not any model.
 	try {
-		const models = CraftingModelService.getModels();
+		const models = await CraftingModelService.fetchModels();
 		if (models.length === 0) {
 			const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
 			outputChannel.appendLine(`No models are available. Please configure models in your organization's LLM settings.`);
@@ -52,7 +52,7 @@ export function activate(context: ExtensionContext, forceActivation?: boolean) {
 		return;
 	}
 
-	return baseActivate({
+	return await baseActivate({
 		context,
 		registerServices,
 		contributions: vscodeNodeContributions,

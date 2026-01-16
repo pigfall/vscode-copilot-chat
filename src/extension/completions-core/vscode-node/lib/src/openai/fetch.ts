@@ -37,7 +37,7 @@ import {
 	getTopP,
 } from './openai';
 import { CopilotAnnotations, SSEProcessor, prepareSolutionForReturn } from './stream';
-import { craftingModelIdFrom, CraftingModelPurpose } from '../../../../../crafting/common/llmconfig';
+import { CraftingModelPurpose } from '../../../../../crafting/common/llmconfig';
 
 const logger = new Logger('fetchCompletions');
 
@@ -501,7 +501,7 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 		const svcs = ctx.get(ServiceContainer);
 		const fimModel = await svcs.modelService.getModelByPurpose(CraftingModelPurpose.CodingFIM);
 		if (fimModel) {
-			request.model = craftingModelIdFrom(fimModel);
+			request.model = fimModel.id;
 		} else {
 			// Do not send the request when we doesn't configure model for fim completion.
 			return 'not-sent';

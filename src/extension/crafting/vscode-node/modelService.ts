@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import { LanguageModelChatInformation } from 'vscode';
 import { ILogService } from '../../../platform/log/common/logService';
 import { IChatEndpoint } from '../../../platform/networking/common/networking';
@@ -9,7 +8,7 @@ import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
-import { AgentSetup, CraftingModel, craftingModelIdFrom, CraftingModelPurpose, ICraftingModelService } from '../common/llmconfig';
+import { CraftingModel, CraftingModelPurpose, ICraftingModelService, ListCraftingModelResponse } from '../common/llmconfig';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 
@@ -36,11 +35,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	}
 
 	getOrCreateChatEndpoint(model: CraftingModel): IChatEndpoint {
-		let id = `${model.provider}:${model.name}`;
-		if (model.provider === "" && model.name === 'AUTO') {
-			id = model.purposes[0];
-		}
-		const name = id;
+		const id = model.id;
 		let endpoint = this.chatEndpointMap.get(id);
 		if (endpoint) {
 			this._lastUsed = endpoint;
@@ -50,18 +45,18 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			OpenAIEndpoint,
 			{
 				id: id,
-				name: name,
+				name: id,
 				model_picker_enabled: true,
 				is_chat_default: false,
 				is_chat_fallback: false,
-				version: model.dialect?.sub_class ?? "",
+				version: model?.extra?.dialect?.sub_class ?? "",
 				capabilities: {
 					limits: {
 						max_prompt_tokens: this.maxInputTokens(model),
 						max_output_tokens: this.maxOutputTokens(model),
 					},
 					type: "chat",
-					family: model.dialect?.model_class ?? "",
+					family: model?.extra?.dialect?.model_class ?? "",
 					supports: {
 						streaming: true,
 						tool_calls: this.supportToolCall(model),
@@ -107,11 +102,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			}
 		}
 
-		const modelId = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
-		const models = await this.getModels();
-		const m = models.find((m) => {
-			return craftingModelIdFrom(m) === modelId;
-		});
+		const m = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
 		if (m) {
 			this._purposeModelMap.set(purpose, m);
 		} else {
@@ -132,15 +123,15 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			return this._models;
 		}
 
-		const models = await this._taskSinger.getOrCreate("getModels", () => this.doGetModels());
+		const models = await this._taskSinger.getOrCreate("getModels", () => CraftingModelService.fetchModels());
 		this._models = models;
 		this._modelsChangedEmitter.fire();
 		return models;
 	}
 
-	private async fetchModelByPurpose(purpose: CraftingModelPurpose): Promise<string | null> {
+	private async fetchModelByPurpose(purpose: CraftingModelPurpose): Promise<CraftingModel | null> {
 		try {
-			const resp = await this.fetcherService.fetch(`http://${craftingLLMAPIHost}/models/${purpose}`, { method: 'GET' });
+			const resp = await this.fetcherService.fetch(`http://${craftingLLMAPIHost}/models/${purpose}?extra=y`, { method: 'GET' });
 			if (resp.status === 404) {
 				this.logService.info(`no ${purpose} model available`);
 				return null;
@@ -149,7 +140,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 				const content = await resp.text();
 				throw new Error(`fetch ${purpose} model failed: ${resp.status} ${content}`);
 			}
-			return JSON.parse(await resp.text()).id;
+			return JSON.parse(await resp.text());
 		} catch (e) {
 			this.logService.error(`fetch ${purpose} model: ${e}`);
 			throw e;
@@ -163,7 +154,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 		if (providerAndName.length === 2) { // The configuration value is in format `{provider}:{model_name}`.
 			const matched = allModels.find((m) => {
-				return m.provider === providerAndName[0] && m.name === providerAndName[1];
+				return m.id === value;
 			});
 			if (matched) {
 				return matched;
@@ -173,7 +164,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		// The configuration value is an alias.
 		// Find the model with the alias.
 		const model = allModels.find((m) => {
-			return m.aliases?.find((alias) => {
+			return m?.extra?.aliases?.find((alias) => {
 				return alias === value;
 			}) !== undefined;
 		});
@@ -183,18 +174,13 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return model;
 	}
 
-	static getModels(): CraftingModel[] {
-		const output = execSync('/opt/sandboxd/sbin/wsenv env setup');
-		const agent: AgentSetup = JSON.parse(output.toString());
-		return agent.llm_config?.models ?? [];
-	}
-
-	/**
-	 * Executes the command to list models from the crafting service.
-	 * @returns Promise resolving to array of CraftingModel.
-	 */
-	private async doGetModels(): Promise<CraftingModel[] | undefined> {
-		return Promise.resolve(CraftingModelService.getModels());
+	static async fetchModels(): Promise<CraftingModel[]> {
+		const resp = await fetch(`http://${craftingLLMAPIHost}/models?extra=y`);
+		if (!resp.ok) {
+			throw new Error(`fetch models failed: ${resp.status}`);
+		}
+		const data: ListCraftingModelResponse = JSON.parse(await resp.text());
+		return data.data;
 	}
 
 	/**
@@ -223,16 +209,19 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	}
 
 	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation {
-		let id = `${model.provider}:${model.name}`;
-		if (model.provider === "" && model.name === "AUTO") { // special handling for AUTO model
-			id = model.purposes[0];
+		const id = model.id;
+		let name = id;
+		const providerAndName = model.id.split(':', 2);
+		if (providerAndName.length === 2) {
+			name = providerAndName[1];
 		}
+
 		return {
 			id: id,
-			name: model.name,
-			family: model.dialect?.model_class ?? "",
+			name: name,
+			family: model?.extra?.dialect?.model_class ?? "",
 			isDefault: isDefault,
-			version: model.dialect?.sub_class ?? "",
+			version: model?.extra?.dialect?.sub_class ?? "",
 			isUserSelectable: true,
 			maxInputTokens: this.maxInputTokens(model),
 			maxOutputTokens: this.maxOutputTokens(model),

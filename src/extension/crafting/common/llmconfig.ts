@@ -19,37 +19,29 @@ export interface ICraftingModelService {
 	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation;
 }
 
-
-// The output of: `wsenv env setup`.
-export interface AgentSetup {
-	llm_config?: LLMConfig;
-}
-
-export interface LLMConfig {
-	models?: CraftingModel[];
+export interface ListCraftingModelResponse {
+	data: CraftingModel[];
 }
 
 export interface CraftingModel {
-	provider: string;
-	name: string;
-	purposes: string[];
-	dialect?: {
-		source?: string;
-		model_class?: string;
-		sub_class?: string;
+	id: string;
+	extra?: {
+		dialect?: {
+			model_class?: string;
+			sub_class?: string;
+		};
+		properties?: {
+			context_window_limit?: number;
+		};
+		aliases?: string[];
+		purposes?: string[];
 	};
-	aliases?: string[];
 }
+
 
 export enum CraftingModelPurpose {
 	Generic = 'GENERIC',
 	Coding = 'CODING',
 	CodingFIM = 'CODING_FIM',
 	CodingNES = 'CODING_NES',
-}
-
-
-// Get the model id in format `{provider}:{model_name}` from CraftingModel.
-export function craftingModelIdFrom(model: CraftingModel): string {
-	return `${model.provider}:${model.name}`;
 }

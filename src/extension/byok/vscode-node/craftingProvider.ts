@@ -2,7 +2,7 @@ import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessa
 import { ILogService } from '../../../platform/log/common/logService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
-import { craftingModelIdFrom, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/llmconfig';
 
 // The CraftingModelProvider implements vscode LanguageModelChatProvider.
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {
@@ -31,7 +31,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 
 	// Implement provideLanguageModelChatResponse.
 	async provideLanguageModelChatResponse(inputModel: LanguageModelChatInformation, messages: Array<LanguageModelChatMessage | LanguageModelChatMessage2>, options: ProvideLanguageModelChatResponseOptions, progress: Progress<LanguageModelResponsePart2>, token: CancellationToken): Promise<any> {
-		const m = (await this._craftingModelService.getModels()).find(m => craftingModelIdFrom(m) === inputModel.id);
+		const m = (await this._craftingModelService.getModels()).find(m => m.id === inputModel.id);
 
 		if (!m) {
 			this._logService.error(`Model ${inputModel.id} not found`);

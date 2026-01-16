@@ -23,7 +23,7 @@ import { IInstantiationService } from '../../../util/vs/platform/instantiation/c
 import { IExtensionContribution } from '../../common/contributions';
 import { CompletionsProvider } from '../../completions/vscode-node/completionsProvider';
 import { unificationStateObservable } from '../../completions/vscode-node/completionsUnificationContribution';
-import { craftingModelIdFrom, CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
 import { TelemetrySender } from '../node/nextEditProviderTelemetry';
 import { InlineEditDebugComponent, reportFeedbackCommandId } from './components/inlineEditDebugComponent';
 import { LogContextRecorder } from './components/logContextRecorder';
@@ -114,7 +114,7 @@ export class InlineEditProviderFeature extends Disposable implements IExtensionC
 				this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, undefined);
 				return;
 			}
-			this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, craftingModelIdFrom(nesModel));
+			this._configurationService.setConfig(ConfigKey.Internal.InlineEditsXtabProviderModelName, nesModel.id);
 		}));
 
 		// This is a place to register the NES completion provider.
