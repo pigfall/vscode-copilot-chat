@@ -200,8 +200,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return 140000;
 	}
 	maxInputTokens(model: CraftingModel): number {
-		// TODO adjust according to model.
-		return 140000;
+		return model?.extra?.properties?.context_window_limit ?? 140000;
 	}
 	supportToolCall(model: CraftingModel): boolean {
 		// TODO adjust according to model.
