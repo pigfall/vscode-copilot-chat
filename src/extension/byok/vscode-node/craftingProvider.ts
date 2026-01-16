@@ -2,7 +2,7 @@ import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessa
 import { ILogService } from '../../../platform/log/common/logService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
-import { ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/types';
 
 // The CraftingModelProvider implements vscode LanguageModelChatProvider.
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {

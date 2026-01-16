@@ -11,7 +11,7 @@ import { autorun, observableFromEvent } from '../../../util/vs/base/common/obser
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { createContext, setup } from '../../completions-core/vscode-node/completionsServiceBridges';
 import { CopilotInlineCompletionItemProvider } from '../../completions-core/vscode-node/extension/src/inlineCompletion';
-import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/llmconfig';
+import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/types';
 import { ILogService } from '../../../platform/log/common/logService';
 import { doUntilSuccess } from '../../../util/common/crafting';
 

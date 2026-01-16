@@ -8,7 +8,7 @@ import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
-import { CraftingModel, CraftingModelPurpose, ICraftingModelService, ListCraftingModelResponse } from '../common/llmconfig';
+import { CraftingModel, CraftingModelPurpose, ICraftingModelService, ListCraftingModelResponse } from '../common/types';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 

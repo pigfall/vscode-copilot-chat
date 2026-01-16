@@ -37,7 +37,7 @@ import {
 	getTopP,
 } from './openai';
 import { CopilotAnnotations, SSEProcessor, prepareSolutionForReturn } from './stream';
-import { CraftingModelPurpose } from '../../../../../crafting/common/llmconfig';
+import { CraftingModelPurpose } from '../../../../../crafting/common/types';
 
 const logger = new Logger('fetchCompletions');
 

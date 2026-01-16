@@ -1,4 +1,4 @@
-import { ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/types';
 
 // A simple service container to hold crafting model related services.
 export class ServiceContainer {

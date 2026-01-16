@@ -19,7 +19,7 @@ import { URI } from '../../../../util/vs/base/common/uri';
 import { IInstantiationService } from '../../../../util/vs/platform/instantiation/common/instantiation';
 import { ServiceCollection } from '../../../../util/vs/platform/instantiation/common/serviceCollection';
 import { ChatResponseReferencePart, Location, Uri } from '../../../../vscodeTypes';
-import { ICraftingModelService } from '../../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../../crafting/common/types';
 import { RendererVisualizations } from '../../../inlineChat/node/rendererVisualization';
 import { getUniqueReferences, PromptReference } from '../../../prompt/common/conversation';
 import { IBuildPromptContext } from '../../../prompt/common/intents';

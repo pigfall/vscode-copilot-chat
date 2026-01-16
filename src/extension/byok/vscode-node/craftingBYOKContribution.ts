@@ -3,7 +3,7 @@ import { ILogService } from '../../../platform/log/common/logService';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { IExtensionContribution } from '../../common/contributions';
-import { ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/types';
 import { CraftingModelProvider } from './craftingProvider';
 import { autorun, observableFromEvent } from '../../../util/vs/base/common/observable';
 import { doUntilSuccess } from '../../../util/common/crafting';

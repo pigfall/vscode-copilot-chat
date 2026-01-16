@@ -77,7 +77,7 @@ import { registerGhostTextDependencies } from './extension/src/ghostText/ghostTe
 import { CopilotStatusBar } from './extension/src/statusBar';
 import { ExtensionTextDocumentManager } from './extension/src/textDocumentManager';
 import { CompletionsCapiBridge } from './bridge/src/completionsCapiBridge';
-import { ICraftingModelService } from '../../crafting/common/llmconfig';
+import { ICraftingModelService } from '../../crafting/common/types';
 import { ServiceContainer } from './utils';
 
 const bridges: any[] = [];
