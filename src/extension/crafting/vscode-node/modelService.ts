@@ -140,7 +140,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 				const content = await resp.text();
 				throw new Error(`fetch ${purpose} model failed: ${resp.status} ${content}`);
 			}
-			return JSON.parse(await resp.text());
+			return await resp.json();
 		} catch (e) {
 			this.logService.error(`fetch ${purpose} model: ${e}`);
 			throw e;
@@ -150,28 +150,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 	private async findConfiguredModel(value: string): Promise<CraftingModel | null> {
 		const allModels = await this.getModels();
-		const providerAndName = value.split(':', 2);
-
-		if (providerAndName.length === 2) { // The configuration value is in format `{provider}:{model_name}`.
-			const matched = allModels.find((m) => {
-				return m.id === value;
-			});
-			if (matched) {
-				return matched;
-			}
-		}
-
-		// The configuration value is an alias.
-		// Find the model with the alias.
-		const model = allModels.find((m) => {
-			return m?.extra?.aliases?.find((alias) => {
-				return alias === value;
-			}) !== undefined;
-		});
-		if (!model) {
-			return null;
-		}
-		return model;
+		return allModels.find((m) => { return m.id === value; }) ?? null;
 	}
 
 	static async fetchModels(): Promise<CraftingModel[]> {
@@ -179,7 +158,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		if (!resp.ok) {
 			throw new Error(`fetch models failed: ${resp.status}`);
 		}
-		const data: ListCraftingModelResponse = JSON.parse(await resp.text());
+		const data = await resp.json() as ListCraftingModelResponse;
 		return data.data;
 	}
 
@@ -197,10 +176,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 	maxOutputTokens(model: CraftingModel): number {
 		// TODO adjust according to model.
-		return 140000;
+		return 200000;
 	}
 	maxInputTokens(model: CraftingModel): number {
-		return model?.extra?.properties?.context_window_limit ?? 140000;
+		return model?.extra?.properties?.context_window_limit ?? 200000;
 	}
 	supportToolCall(model: CraftingModel): boolean {
 		// TODO adjust according to model.
