@@ -8,7 +8,7 @@ import { Emitter } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { OpenAIEndpoint } from '../../byok/node/openAIEndpoint';
-import { CraftingModel, CraftingModelPurpose, ICraftingModelService, ListCraftingModelResponse } from '../common/types';
+import { CraftingModel, CraftingModelPurpose, ICraftingModelService, isCraftingModelPurpose, ListCraftingModelResponse } from '../common/types';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 
@@ -156,7 +156,8 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	static async fetchModels(): Promise<CraftingModel[]> {
 		const resp = await fetch(`http://${craftingLLMAPIHost}/models?extra=y`);
 		if (!resp.ok) {
-			throw new Error(`fetch models failed: ${resp.status}`);
+			const content = await resp.text();
+			throw new Error(`fetch models failed: ${resp.status}, ${content}`);
 		}
 		const data = await resp.json() as ListCraftingModelResponse;
 		return data.data;
@@ -190,9 +191,26 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		const id = model.id;
 		let name = id;
 		const providerAndName = model.id.split(':', 2);
-		if (providerAndName.length === 2) {
+		// The name will be showed to user.
+		if (providerAndName.length === 2) { // If the id is `provider:model_name`. Retrive the model_name.
 			name = providerAndName[1];
+		} else if (isCraftingModelPurpose(id.toUpperCase())) { // If the id is a purpose, use a friendly name.
+			switch (id.toUpperCase() as CraftingModelPurpose) {
+				case CraftingModelPurpose.Generic:
+					name = "Generic";
+					break;
+				case CraftingModelPurpose.Coding:
+					name = "Coding";
+					break;
+				case CraftingModelPurpose.CodingFIM: // TODO should we allow this type model to be user selectable at chat panel?
+					name = "Coding FIM";
+					break;
+				case CraftingModelPurpose.CodingNES: // TODO should we allow this type model to be user selectable at chat panel?
+					name = "Coding NES";
+					break;
+			}
 		}
+
 
 		return {
 			id: id,

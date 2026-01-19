@@ -45,3 +45,7 @@ export enum CraftingModelPurpose {
 	CodingFIM = 'CODING_FIM',
 	CodingNES = 'CODING_NES',
 }
+
+export const isCraftingModelPurpose = (v: unknown): v is CraftingModelPurpose => {
+	return typeof v === 'string' && (Object.values(CraftingModelPurpose) as string[]).includes(v);
+};
