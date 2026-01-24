@@ -27,7 +27,7 @@ import {
 } from 'vscode';
 import { Disposable } from '../../../../../util/vs/base/common/lifecycle';
 import { isCompletionEnabledForDocument } from './config';
-import { CopilotCompletionFeedbackTracker, sendCompletionFeedbackCommand } from './copilotCompletionFeedbackTracker';
+import { CopilotCompletionFeedbackTracker } from './copilotCompletionFeedbackTracker';
 import { CopilotExtensionStatus } from './extensionStatus';
 import { GhostTextProvider } from './ghostText/ghostText';
 
@@ -137,6 +137,7 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 			}
 
 			const list = Array.isArray(items) ? { items } : items;
+			// The completionFromFIM command do nothing. We just add it to show this completion is from FIM completion provider.
 			return {
 				items: list.items,
 				commands: [...(list.commands ?? []), completionFromFIM],

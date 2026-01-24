@@ -270,6 +270,7 @@ export class InlineCompletionProviderImpl implements InlineCompletionItemProvide
 			if (this.inlineEditDebugComponent) {
 				menuCommands.push(...this.inlineEditDebugComponent.getCommands(logContext));
 			}
+			// The completionFromNES do nothing. We just add it to show the completion is from NES provider.
 			menuCommands.push(completionFromNES);
 
 

@@ -195,7 +195,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		return true;
 	}
 
-	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation {
+	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean, order: number): LanguageModelChatInformation {
 		const id = model.id;
 		let name = id;
 		const providerAndName = model.id.split(':', 2);
@@ -210,15 +210,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 				case CraftingModelPurpose.Coding:
 					name = "Coding";
 					break;
-				case CraftingModelPurpose.CodingFIM: // TODO should we allow this type model to be user selectable at chat panel?
-					name = "Coding FIM";
-					break;
-				case CraftingModelPurpose.CodingNES: // TODO should we allow this type model to be user selectable at chat panel?
-					name = "Coding NES";
-					break;
+				case CraftingModelPurpose.Fast:
+					name = "Fast";
 			}
 		}
-
 
 		return {
 			id: id,
@@ -229,6 +224,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			isUserSelectable: true,
 			maxInputTokens: this.maxInputTokens(model),
 			maxOutputTokens: this.maxOutputTokens(model),
+			category: {
+				label: id,
+				order: order,
+			},
 			capabilities: {
 				toolCalling: this.supportToolCall(model),
 			}

@@ -16,7 +16,7 @@ export interface ICraftingModelService {
 	readonly onPurposeModelMapChanged: Event<void>;
 	lastUsedChatEndpoint(): IChatEndpoint | undefined;
 	getOrCreateChatEndpoint(model: CraftingModel): IChatEndpoint;
-	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean): LanguageModelChatInformation;
+	toLanguageModelChatInformation(model: CraftingModel, isDefault: boolean, order: number): LanguageModelChatInformation;
 }
 
 export interface ListCraftingModelResponse {
@@ -42,6 +42,7 @@ export interface CraftingModel {
 export enum CraftingModelPurpose {
 	Generic = 'GENERIC',
 	Coding = 'CODING',
+	Fast = 'FAST',
 	CodingFIM = 'CODING_FIM',
 	CodingNES = 'CODING_NES',
 }

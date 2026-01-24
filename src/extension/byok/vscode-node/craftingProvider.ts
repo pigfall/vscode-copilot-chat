@@ -2,7 +2,7 @@ import { CancellationToken, LanguageModelChatInformation, LanguageModelChatMessa
 import { ILogService } from '../../../platform/log/common/logService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotLanguageModelWrapper } from '../../conversation/vscode-node/languageModelAccess';
-import { ICraftingModelService } from '../../crafting/common/types';
+import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/types';
 
 // The CraftingModelProvider implements vscode LanguageModelChatProvider.
 export class CraftingModelProvider implements LanguageModelChatProvider<LanguageModelChatInformation> {
@@ -20,8 +20,12 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 	async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		try {
 			const allModels = await this._craftingModelService.getModels();
-			return allModels.map((m) => {
-				return this._craftingModelService.toLanguageModelChatInformation(m, m === allModels[0]);
+			return allModels.filter((m) => {
+				// Do not include the model which id is purpose `CODING_FIM` or `CODING_NES`.
+				const id = m.id.toUpperCase();
+				return id !== CraftingModelPurpose.CodingFIM && id !== CraftingModelPurpose.CodingNES;
+			}).map((m, index) => {
+				return this._craftingModelService.toLanguageModelChatInformation(m, m === allModels[0], index);
 			});
 		} catch (err) {
 			this._logService.error(`get models failed ${err} `);
