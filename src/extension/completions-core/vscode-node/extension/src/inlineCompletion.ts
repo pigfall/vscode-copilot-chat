@@ -13,6 +13,7 @@ import { telemetry, TelemetryData } from '../../lib/src/telemetry';
 import { Deferred } from '../../lib/src/util/async';
 import {
 	CancellationToken,
+	Command,
 	InlineCompletionContext,
 	InlineCompletionEndOfLifeReason,
 	InlineCompletionItem,
@@ -135,13 +136,10 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 				return undefined;
 			}
 
-			// If the language client provides a list of items, we want to add the send feedback command to it.
-			if (Array.isArray(items)) {
-				items = { items };
-			}
+			const list = Array.isArray(items) ? { items } : items;
 			return {
-				...items,
-				commands: [sendCompletionFeedbackCommand],
+				items: list.items,
+				commands: [...(list.commands ?? []), completionFromFIM],
 			};
 		} catch (e) {
 			exception(this.ctx, e, '.provideInlineCompletionItems', logger);
@@ -176,3 +174,9 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 		}
 	}
 }
+
+const completionFromFIM: Command = {
+	command: "",
+	title: 'This completion from FIM Provider',
+	tooltip: '',
+};

@@ -96,7 +96,10 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		if (specifiedModel) {
 			const m = await this.findConfiguredModel(specifiedModel);
 			if (m) {
-				this._purposeModelMap.set(purpose, m);
+				// Replace with the new map to trigger change event.
+				// The in place update of map won't trigger observable change even if we fire the event.
+				const newMap = new Map(this._purposeModelMap);
+				this._purposeModelMap = newMap.set(purpose, m);
 				this._purposeModelMapChangedEmitter.fire();
 				return m;
 			}
@@ -104,9 +107,14 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 
 		const m = await this._taskSinger.getOrCreate(`getModelByPurpose:${purpose}`, () => this.fetchModelByPurpose(purpose));
 		if (m) {
-			this._purposeModelMap.set(purpose, m);
+			// Replace with the new map to trigger change event.
+			const newMap = new Map(this._purposeModelMap);
+			this._purposeModelMap = newMap.set(purpose, m);
 		} else {
-			this._purposeModelMap.delete(purpose);
+			// Replace with the new map to trigger change event.
+			const newMap = new Map(this._purposeModelMap);
+			newMap.delete(purpose);
+			this._purposeModelMap = newMap;
 		}
 		this._purposeModelMapChangedEmitter.fire();
 

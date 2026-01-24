@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, Command, EndOfLine, InlineCompletionContext, InlineCompletionDisplayLocation, InlineCompletionDisplayLocationKind, InlineCompletionEndOfLifeReason, InlineCompletionEndOfLifeReasonKind, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, InlineCompletionsDisposeReason, InlineCompletionsDisposeReasonKind, NotebookCell, NotebookCellKind, Position, Range, TextDocument, TextDocumentShowOptions, l10n, Event as vscodeEvent, window, workspace } from 'vscode';
+import { CancellationToken, Command, EndOfLine, InlineCompletionContext, InlineCompletionDisplayLocation, InlineCompletionDisplayLocationKind, InlineCompletionEndOfLifeReason, InlineCompletionEndOfLifeReasonKind, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, InlineCompletionsDisposeReason, InlineCompletionsDisposeReasonKind, NotebookCell, NotebookCellKind, Position, Range, TextDocument, TextDocumentShowOptions, ThemeIcon, l10n, Event as vscodeEvent, window, workspace } from 'vscode';
 import { ConfigKey, IConfigurationService } from '../../../platform/configuration/common/configurationService';
 import { IDiffService } from '../../../platform/diff/common/diffService';
 import { stringEditFromDiff } from '../../../platform/editing/common/edit';
@@ -270,6 +270,7 @@ export class InlineCompletionProviderImpl implements InlineCompletionItemProvide
 			if (this.inlineEditDebugComponent) {
 				menuCommands.push(...this.inlineEditDebugComponent.getCommands(logContext));
 			}
+			menuCommands.push(completionFromNES);
 
 
 			// telemetry
@@ -627,3 +628,12 @@ function addNotebookTelemetry(document: TextDocument, position: Position, newTex
 		.setNotebookId(notebookId)
 		.setIsNESForOtherEditor(documents[0][0] !== document);
 }
+
+const completionFromNES: InlineCompletionCommand = {
+	command: {
+		command: "",
+		title: 'This completion from NES Provider',
+		tooltip: '',
+	},
+	icon: new ThemeIcon('info')
+};
