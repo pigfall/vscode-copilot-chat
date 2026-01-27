@@ -18,7 +18,7 @@ import { doUntilSuccess } from '../../../util/common/crafting';
 export class CompletionsCoreContribution extends Disposable {
 
 	private _provider: CopilotInlineCompletionItemProvider | undefined;
-	private _registerd = false;
+	private _registered = false;
 
 	private readonly _copilotToken = observableFromEvent(this, this.authenticationService.onDidAuthenticationChange, () => this.authenticationService.copilotToken);
 	private readonly _purposeModelMap = observableFromEvent(this, this._modelService.onPurposeModelMapChanged, () => this._modelService.purposeModelMap);
@@ -41,7 +41,7 @@ export class CompletionsCoreContribution extends Disposable {
 		// 2. The copilot token has been acquired.
 		// 3. The crafting models were fetched.
 		this._register(autorun(reader => {
-			if (this._registerd) {
+			if (this._registered) {
 				return;
 			}
 			const configEnabled = this._fimCompletionEnabled.read(reader);
@@ -64,7 +64,7 @@ export class CompletionsCoreContribution extends Disposable {
 			const provider = this._getOrCreateProvider();
 			reader.store.add(languages.registerInlineCompletionItemProvider({ pattern: '**' }, provider, { debounceDelayMs: 0, excludes: ['github.copilot'], groupId: 'completions' }));
 			this._logService.info('FIM Completion Provider registered');
-			this._registerd = true;
+			this._registered = true;
 		}));
 
 		doUntilSuccess(() => this._modelService.getModelByPurpose(CraftingModelPurpose.CodingFIM));
