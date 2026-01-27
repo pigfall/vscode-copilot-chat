@@ -633,7 +633,7 @@ function addNotebookTelemetry(document: TextDocument, position: Position, newTex
 const completionFromNES: InlineCompletionCommand = {
 	command: {
 		command: "",
-		title: 'This completion from NES Provider',
+		title: 'This completion is from NES Provider',
 		tooltip: '',
 	},
 	icon: new ThemeIcon('info')

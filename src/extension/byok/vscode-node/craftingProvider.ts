@@ -28,8 +28,8 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 				return this._craftingModelService.toLanguageModelChatInformation(m, m === allModels[0], index);
 			});
 		} catch (err) {
-			this._logService.error(`get models failed ${err} `);
-			throw err.message;
+			this._logService.error(`get models failed ${err.message} `);
+			throw err;
 		}
 	}
 
@@ -42,7 +42,7 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 			return Promise.reject(`Model ${inputModel.id} not found`);
 		}
 
-		// Create the endppoint by CraftingModel and call CopilotLanguageModelWrapper to provide response.
+		// Create the endpoint by CraftingModel and call CopilotLanguageModelWrapper to provide response.
 		const chatEndpoint = this._craftingModelService.getOrCreateChatEndpoint(m);
 		return this._lmWrapper.provideLanguageModelResponse(chatEndpoint, messages, options, options.requestInitiator, progress, token);
 	}

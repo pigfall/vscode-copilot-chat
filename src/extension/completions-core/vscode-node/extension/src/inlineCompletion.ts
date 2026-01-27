@@ -178,6 +178,6 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 
 const completionFromFIM: Command = {
 	command: "",
-	title: 'This completion from FIM Provider',
+	title: 'This completion is from FIM Provider',
 	tooltip: '',
 };

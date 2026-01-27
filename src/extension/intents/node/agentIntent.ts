@@ -88,6 +88,8 @@ export const getAgentTools = (instaService: IInstantiationService, request: vsco
 			}
 		}
 
+		// The vscode will report error when ToolName.EditFile is called. TODO Attach the error description.
+		// gemini,openai,anthropic all support ToolName.ApplyPatch.
 		allowTools[ToolName.EditFile] = false;
 		allowTools[ToolName.ApplyPatch] = true;
 
