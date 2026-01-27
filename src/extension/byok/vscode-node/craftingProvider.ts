@@ -49,6 +49,6 @@ export class CraftingModelProvider implements LanguageModelChatProvider<Language
 
 	async provideTokenCount(model: LanguageModelChatInformation, text: string | LanguageModelChatRequestMessage, token: CancellationToken): Promise<number> {
 		// TODO
-		throw new Error("Unimplmented");
+		throw new Error("Unimplemented");
 	}
 }

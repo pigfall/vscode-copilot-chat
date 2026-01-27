@@ -203,16 +203,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		if (providerAndName.length === 2) { // If the id is `provider:model_name`. Retrive the model_name.
 			name = providerAndName[1];
 		} else if (isCraftingModelPurpose(id.toUpperCase())) { // If the id is a purpose, use a friendly name.
-			switch (id.toUpperCase() as CraftingModelPurpose) {
-				case CraftingModelPurpose.Generic:
-					name = "Generic";
-					break;
-				case CraftingModelPurpose.Coding:
-					name = "Coding";
-					break;
-				case CraftingModelPurpose.Fast:
-					name = "Fast";
-			}
+			name = userFriendlyModelPurposeName(id);
 		}
 
 		return {
@@ -233,4 +224,14 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 			}
 		};
 	}
+}
+
+function userFriendlyModelPurposeName(id: string): string {
+	const overrides: Partial<Record<CraftingModelPurpose, string>> = {
+	};
+
+	return overrides[id as CraftingModelPurpose] ??
+		id.toLowerCase()
+			.replace(/_/g, ' ') // Replace underscores with spaces
+			.replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalize first letter of each word
 }
