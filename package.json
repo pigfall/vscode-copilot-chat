@@ -3791,7 +3791,8 @@
 				{
 					"id": "copilot-chat",
 					"title": "Chat Debug",
-					"icon": "assets/debug-icon.svg"
+					"icon": "assets/debug-icon.svg",
+					"when": "github.copilot.chat.showLogView"
 				},
 				{
 					"id": "context-inspector",
