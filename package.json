@@ -1134,6 +1134,17 @@
 		],
 		"chatParticipants": [
 			{
+				"id":"crafting.sandbox.workspace",
+				"name":"CraftingSandboxWorkspace",
+				"fullName": "Crafting Sandbox Workspace",
+				"locations": [
+					"panel"
+				],
+				"modes": [
+					"agent"
+				]
+			},
+			{
 				"id": "github.copilot.default",
 				"name": "GitHubCopilot",
 				"fullName": "GitHub Copilot",
