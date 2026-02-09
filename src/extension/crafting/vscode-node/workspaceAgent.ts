@@ -4,9 +4,10 @@ import { IExtensionContribution } from '../../common/contributions';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { ILogService } from '../../../platform/log/common/logService';
-import { AgentMsgType, MsgAppend, MsgStart, RawMsg, Role } from '../common/agentMessages';
+import { AgentMsgType, MsgAppend, MsgStart, RawMsg, Role, SamplerMessage } from '../common/agentMessages';
 import * as readline from 'readline';
 
+// Registers the WorkspaceAgent as a chat participant in VS Code.
 export class WorkspaceAgentContrib extends Disposable implements IExtensionContribution {
 	static readonly ID = 'crafting.sandbox.workspace';
 	constructor(
@@ -22,24 +23,29 @@ export class WorkspaceAgentContrib extends Disposable implements IExtensionContr
 	}
 }
 
+// WorkspaceAgent is responsible for handling chat requests for the workspace agent participant.
+// It delegates incoming chat requests to WorkspaceAgentRequestHandler.
 export class WorkspaceAgent {
 	constructor(
 		@ILogService private readonly logService: ILogService
 	) {
 
 	}
+
 	chatRequestHandler(
 		request: vscode.ChatRequest,
 		context: vscode.ChatContext,
 		stream: vscode.ChatResponseStream,
 		token: vscode.CancellationToken
-	): Promise<void> {
+	): Promise<vscode.ChatResult> {
 		return new WorkspaceAgentRequestHandler(this.logService).handle(request, context, stream, token);
 	}
 }
 
 class WorkspaceAgentRequestHandler {
 	toolCallings = new Map<string, () => void>();
+	// Record the messages output from agent in this turn.
+	msgs: MsgAppend[] = [];
 	constructor(
 		readonly logService: ILogService,
 	) {
@@ -47,13 +53,15 @@ class WorkspaceAgentRequestHandler {
 	}
 
 	// Handle the vscode chat request. Render the response to chat panel.
+	// It will retrieve the conversation history from context, and send it to agent as the initial conversation.
+	// Then it will keep listening on the stdout of the agent process, and render the message to chat panel once it receives a new message.
 	handle(
 		request: vscode.ChatRequest,
 		context: vscode.ChatContext,
 		stream: vscode.ChatResponseStream,
 		token: vscode.CancellationToken
-	): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
+	): Promise<vscode.ChatResult> {
+		return new Promise<vscode.ChatResult>((resolve, reject) => {
 			this.logService.info(`WorkspaceAgent received request: ${request.prompt}`);
 			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run'], {
 				stdio: 'pipe',
@@ -98,27 +106,61 @@ class WorkspaceAgentRequestHandler {
 					return;
 				}
 				cancellationHandler.dispose();
-				resolve();
+				// Save the messages to metadata of the chat result, so we could retrieve it in the follow-up conversation.
+				resolve({ metadata: { 'msgs': JSON.stringify(this.msgs) } });
 				rl.close();
 			});
 
-			const msgStart: MsgStart = {
-				cid: "todo",
-				agent: 'workspace',
-				conv: {
-					messages: [{ role: Role.User, content: { text: request.prompt } }]
-				}
-			};
 			const rawMsg: RawMsg = {
 				t: AgentMsgType.Start,
-				p: msgStart
+				p: this.buildStartMsg(request, context),
 			};
 			this.logService.info(`WorkspaceAgent sending message: ${JSON.stringify(rawMsg)}`);
 
 			child.stdin.write(JSON.stringify(rawMsg) + '\n');
 			// child.stdin.end();
 		});
+	}
 
+	buildStartMsg(request: vscode.ChatRequest, context: vscode.ChatContext): MsgStart {
+		const messages: SamplerMessage[] = [];
+		// retrive the messages from history.
+		context.history.forEach((msg) => {
+			if (msg instanceof vscode.ChatRequestTurn) {
+				messages.push({
+					role: Role.User,
+					content: {
+						text: msg.prompt
+					}
+				});
+				return;
+			}
+
+			if (msg instanceof vscode.ChatResponseTurn) {
+				if (msg.result?.metadata && msg.result.metadata['msgs']) {
+					JSON.parse(msg.result.metadata['msgs']).forEach((m: MsgAppend) => {
+						m.msg && messages.push(m.msg);
+					});
+				}
+				return;
+			}
+		});
+
+		// Push the new prompt.
+		messages.push({
+			role: Role.User,
+			content: {
+				text: request.prompt
+			}
+		});
+
+		return {
+			cid: "todo",
+			agent: 'workspace',
+			conv: {
+				messages
+			}
+		};
 	}
 
 	// Render the raw message to vscode chat pannel.
@@ -141,8 +183,7 @@ class WorkspaceAgentRequestHandler {
 				this.logService.warn(`WorkspaceAgent received user message in append: ${JSON.stringify(msgAppend.msg)}`);
 				return;
 			}
-			// For each message, start with a new line.
-			render.markdown('\n');
+			this.msgs.push(msgAppend);
 			if (msgAppend.msg.role === Role.Assistant && msgAppend.msg.content) {
 				render.markdown(msgAppend.msg.content.text || '');
 				return;
@@ -162,7 +203,7 @@ class WorkspaceAgentRequestHandler {
 
 			// TODO handle tool call error.
 			if (msgAppend.msg.role === Role.Tool) {
-				this.logService.debug(`WorkspaceAgent received tool call finished`);
+				this.logService.debug(`WorkspaceAgent received tool call result`);
 				this.toolCallings.get(msgAppend.msg.tool_call_id || '')?.();
 			}
 
@@ -170,6 +211,9 @@ class WorkspaceAgentRequestHandler {
 		}
 
 		if (msgAppend.cnt && msgAppend.cnt.text) {
+			// Get the last message from this.msgs
+			const latestMsg = this.msgs[this.msgs.length - 1];
+			latestMsg.msg?.content?.text?.concat(msgAppend.cnt.text);
 			render.markdown(msgAppend.cnt.text);
 		}
 
