@@ -62,7 +62,7 @@ class WorkspaceAgentRequestHandler {
 		token: vscode.CancellationToken
 	): Promise<vscode.ChatResult> {
 		return new Promise<vscode.ChatResult>((resolve, reject) => {
-			this.logService.info(`WorkspaceAgent received request: ${request.prompt}`);
+			this.logService.debug(`WorkspaceAgent received user prompt: ${request.prompt}`);
 			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run'], {
 				stdio: 'pipe',
 				env: { ...process.env },
@@ -74,22 +74,25 @@ class WorkspaceAgentRequestHandler {
 				crlfDelay: Infinity // Recognize all instances of CR LF (\r\n) as a single line break
 			});
 
+			// Read the stdout of the agent line by line, and render the message to chat panel once it receives a new message.
 			rl.on('line', (line) => {
 				try {
-					this.logService.info(`WorkspaceAgent received line: ${line}`);
+					this.logService.debug(`WorkspaceAgent received agent output: ${line}`);
 					const rawMsg: RawMsg = JSON.parse(line);
 					this.renderRawMessage(stream, rawMsg);
 				} catch (error) {
-					this.logService.error(`Failed to decode line to RawMsg: ${error.message}`);
+					this.logService.error(`Failed to decode agent's output to RawMsg: ${error.message}`);
 				}
 			});
 
+			// Read the stderr of the agent, and log it.
 			child.stderr.setEncoding('utf8');
 			child.stderr.on('data', (data) => {
-				this.logService.error(`WorkspaceAgent stderr: ${data}`);
+				this.logService.error(`error from agent's stderr: ${data}`);
 			});
 
 			const cancellationHandler = token.onCancellationRequested(() => {
+				this.logService.debug(`Chat request cancelled, killing the agent process.`);
 				child.kill('SIGTERM');
 			});
 
@@ -100,9 +103,9 @@ class WorkspaceAgentRequestHandler {
 			});
 
 			child.on('close', (code) => {
-				this.logService.info(`WorkspaceAgent process exited with code: ${code}`);
+				this.logService.debug(`agent process exited with code: ${code}`);
 				if (code !== 0) {
-					reject(new Error(`WorkspaceAgent process exited with code: ${code}`));
+					reject(new Error(`agent process exited with code: ${code}`));
 					return;
 				}
 				cancellationHandler.dispose();
@@ -115,13 +118,13 @@ class WorkspaceAgentRequestHandler {
 				t: AgentMsgType.Start,
 				p: this.buildStartMsg(request, context),
 			};
-			this.logService.info(`WorkspaceAgent sending message: ${JSON.stringify(rawMsg)}`);
+			this.logService.debug(`send message to agent: ${JSON.stringify(rawMsg)}`);
 
 			child.stdin.write(JSON.stringify(rawMsg) + '\n');
-			// child.stdin.end();
 		});
 	}
 
+	// Build the start message to agent. It contains the conversation history and the new prompt.
 	buildStartMsg(request: vscode.ChatRequest, context: vscode.ChatContext): MsgStart {
 		const messages: SamplerMessage[] = [];
 		// retrive the messages from history.
@@ -155,7 +158,7 @@ class WorkspaceAgentRequestHandler {
 		});
 
 		return {
-			cid: "todo",
+			cid: request.id,
 			agent: 'workspace',
 			conv: {
 				messages
@@ -191,7 +194,7 @@ class WorkspaceAgentRequestHandler {
 
 			if (msgAppend.msg.role === Role.Assistant && msgAppend.msg.tool_call) {
 				this.logService.debug(`WorkspaceAgent received tool call: ${msgAppend.msg.tool_call.name}`);
-				render.progress(msgAppend.msg.tool_call.name, async (progress) => {
+				render.progress(msgAppend.msg.tool_call.name, async (_progress) => {
 					return new Promise<void>((resolve) => {
 						this.toolCallings.set(msgAppend.msg?.tool_call?.id || '', () => {
 							resolve();
