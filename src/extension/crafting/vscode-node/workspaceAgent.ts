@@ -79,7 +79,7 @@ class WorkspaceAgentRequestHandler {
 				try {
 					this.logService.debug(`WorkspaceAgent received agent output: ${line}`);
 					const rawMsg: RawMsg = JSON.parse(line);
-					this.renderRawMessage(stream, rawMsg);
+					this.handleRawMessage(stream, rawMsg, reject);
 				} catch (error) {
 					this.logService.error(`Failed to decode agent's output to RawMsg: ${error.message}`);
 				}
@@ -166,15 +166,35 @@ class WorkspaceAgentRequestHandler {
 		};
 	}
 
-	// Render the raw message to vscode chat pannel.
-	renderRawMessage(render: vscode.ChatResponseStream, rawMsg: RawMsg) {
+	// Handle the raw message.
+	handleRawMessage(render: vscode.ChatResponseStream, rawMsg: RawMsg, reject: (reason?: any) => void) {
 		switch (rawMsg.t) {
 			case (AgentMsgType.Append): {
 				this.renderAppendMessage(render, rawMsg.p as MsgAppend);
 				break;
 			}
-			default:
+			case (AgentMsgType.Error): {
+				this.logService.error(`error message received from agent: ${JSON.stringify(rawMsg.p)}`);
+				reject(new Error(rawMsg.p || 'unknown error from agent'));
+				break;
+			}
+			case (AgentMsgType.End): {
+				this.logService.debug(`end message received from agent, conversation ended.`);
+				// Do nothing, just wait for the agent process to exit and resolve the chat result in the close event handler.
+				break;
+			}
+			case (AgentMsgType.StateGet): {
+				this.logService.debug(`state-get message received from agent: ${rawMsg.p}`);
+				break;
+			}
+			case (AgentMsgType.StateSet): {
+				this.logService.debug(`state-set message received from agent: ${rawMsg.p}`);
+				break;
+			}
+
+			default: {
 				this.logService.warn(`WorkspaceAgent received unknown message type: ${rawMsg.t}`);
+			}
 		}
 	}
 
@@ -204,7 +224,6 @@ class WorkspaceAgentRequestHandler {
 				return;
 			}
 
-			// TODO handle tool call error.
 			if (msgAppend.msg.role === Role.Tool) {
 				this.logService.debug(`WorkspaceAgent received tool call result`);
 				this.toolCallings.get(msgAppend.msg.tool_call_id || '')?.();
@@ -216,7 +235,9 @@ class WorkspaceAgentRequestHandler {
 		if (msgAppend.cnt && msgAppend.cnt.text) {
 			// Get the last message from this.msgs
 			const latestMsg = this.msgs[this.msgs.length - 1];
-			latestMsg.msg?.content?.text?.concat(msgAppend.cnt.text);
+			if (latestMsg.msg?.content) {
+				latestMsg.msg.content.text = (latestMsg.msg.content.text || '') + msgAppend.cnt.text;
+			}
 			render.markdown(msgAppend.cnt.text);
 		}
 
