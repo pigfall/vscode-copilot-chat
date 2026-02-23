@@ -4,8 +4,8 @@ import { IExtensionContribution } from '../../common/contributions';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 import { ILogService } from '../../../platform/log/common/logService';
-import { AgentMsgType, MsgAppend, MsgStart, RawMsg, Role, SamplerMessage } from '../common/agentMessages';
 import * as readline from 'readline';
+import { LLMSession } from '../common/llmSession';
 
 // Registers the WorkspaceAgent as a chat participant in VS Code.
 export class WorkspaceAgentContrib extends Disposable implements IExtensionContribution {
@@ -44,8 +44,6 @@ export class WorkspaceAgent {
 
 class WorkspaceAgentRequestHandler {
 	toolCallings = new Map<string, () => void>();
-	// Record the messages output from agent in this turn.
-	msgs: MsgAppend[] = [];
 	constructor(
 		readonly logService: ILogService,
 	) {
@@ -63,7 +61,7 @@ class WorkspaceAgentRequestHandler {
 	): Promise<vscode.ChatResult> {
 		return new Promise<vscode.ChatResult>((resolve, reject) => {
 			this.logService.debug(`WorkspaceAgent received user prompt: ${request.prompt}`);
-			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run'], {
+			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run', '--stream-events=json', '--agent=workspace', `--session=${request.sessionId}`], {
 				stdio: 'pipe',
 				env: { ...process.env },
 			});
@@ -78,10 +76,12 @@ class WorkspaceAgentRequestHandler {
 			rl.on('line', (line) => {
 				try {
 					this.logService.debug(`WorkspaceAgent received agent output: ${line}`);
-					const rawMsg: RawMsg = JSON.parse(line);
-					this.handleRawMessage(stream, rawMsg, reject);
+					const event: LLMSession.Message = JSON.parse(line);
+					this.handleEvent(event, stream);
 				} catch (error) {
-					this.logService.error(`Failed to decode agent's output to RawMsg: ${error.message}`);
+					this.logService.error(`Failed to decode agent's event: ${line}`);
+					child.kill('SIGTERM');
+					reject(error);
 				}
 			});
 
@@ -110,137 +110,42 @@ class WorkspaceAgentRequestHandler {
 				}
 				cancellationHandler.dispose();
 				// Save the messages to metadata of the chat result, so we could retrieve it in the follow-up conversation.
-				resolve({ metadata: { 'msgs': JSON.stringify(this.msgs) } });
+				resolve({});
 				rl.close();
 			});
 
-			const rawMsg: RawMsg = {
-				t: AgentMsgType.Start,
-				p: this.buildStartMsg(request, context),
-			};
-			this.logService.debug(`send message to agent: ${JSON.stringify(rawMsg)}`);
+			child.stdin.write(request.prompt);
+			child.stdin.end();
 
-			child.stdin.write(JSON.stringify(rawMsg) + '\n');
 		});
 	}
 
-	// Build the start message to agent. It contains the conversation history and the new prompt.
-	buildStartMsg(request: vscode.ChatRequest, context: vscode.ChatContext): MsgStart {
-		const messages: SamplerMessage[] = [];
-		// retrive the messages from history.
-		context.history.forEach((msg) => {
-			if (msg instanceof vscode.ChatRequestTurn) {
-				messages.push({
-					role: Role.User,
-					content: {
-						text: msg.prompt
-					}
-				});
-				return;
-			}
-
-			if (msg instanceof vscode.ChatResponseTurn) {
-				if (msg.result?.metadata && msg.result.metadata['msgs']) {
-					JSON.parse(msg.result.metadata['msgs']).forEach((m: MsgAppend) => {
-						m.msg && messages.push(m.msg);
-					});
+	handleEvent(event: LLMSession.Message, responseStream: vscode.ChatResponseStream) {
+		switch (event.role) {
+			case LLMSession.Role.Assistant: {
+				if (event.content) {
+					responseStream.markdown(event.content.text || '');
 				}
-				return;
-			}
-		});
-
-		// Push the new prompt.
-		messages.push({
-			role: Role.User,
-			content: {
-				text: request.prompt
-			}
-		});
-
-		return {
-			cid: request.id,
-			agent: 'workspace',
-			conv: {
-				messages
-			}
-		};
-	}
-
-	// Handle the raw message.
-	handleRawMessage(render: vscode.ChatResponseStream, rawMsg: RawMsg, reject: (reason?: any) => void) {
-		switch (rawMsg.t) {
-			case (AgentMsgType.Append): {
-				this.renderAppendMessage(render, rawMsg.p as MsgAppend);
-				break;
-			}
-			case (AgentMsgType.Error): {
-				this.logService.error(`error message received from agent: ${JSON.stringify(rawMsg.p)}`);
-				reject(new Error(rawMsg.p || 'unknown error from agent'));
-				break;
-			}
-			case (AgentMsgType.End): {
-				this.logService.debug(`end message received from agent, conversation ended.`);
-				// Do nothing, just wait for the agent process to exit and resolve the chat result in the close event handler.
-				break;
-			}
-			case (AgentMsgType.StateGet): {
-				this.logService.debug(`state-get message received from agent: ${rawMsg.p}`);
-				break;
-			}
-			case (AgentMsgType.StateSet): {
-				this.logService.debug(`state-set message received from agent: ${rawMsg.p}`);
-				break;
-			}
-
-			default: {
-				this.logService.warn(`WorkspaceAgent received unknown message type: ${rawMsg.t}`);
-			}
-		}
-	}
-
-	// Render the append message to vscode chat pannel.
-	renderAppendMessage(render: vscode.ChatResponseStream, msgAppend: MsgAppend) {
-		if (msgAppend.msg) {
-			if (msgAppend.msg.role === Role.User) {
-				// The chat response should not contain user messages. Ignore it.
-				this.logService.warn(`WorkspaceAgent received user message in append: ${JSON.stringify(msgAppend.msg)}`);
-				return;
-			}
-			this.msgs.push(msgAppend);
-			if (msgAppend.msg.role === Role.Assistant && msgAppend.msg.content) {
-				render.markdown(msgAppend.msg.content.text || '');
-				return;
-			}
-
-			if (msgAppend.msg.role === Role.Assistant && msgAppend.msg.tool_call) {
-				this.logService.debug(`WorkspaceAgent received tool call: ${msgAppend.msg.tool_call.name}`);
-				render.progress(msgAppend.msg.tool_call.name, async (_progress) => {
-					return new Promise<void>((resolve) => {
-						this.toolCallings.set(msgAppend.msg?.tool_call?.id || '', () => {
-							resolve();
+				if (event.tool_call) {
+					const id = event.tool_call.id;
+					responseStream.progress(event.tool_call.name, async (_progress) => {
+						return new Promise<void>((resolve) => {
+							this.toolCallings.set(id, () => {
+								resolve();
+							});
 						});
 					});
-				});
-				return;
+				}
+				break;
 			}
-
-			if (msgAppend.msg.role === Role.Tool) {
-				this.logService.debug(`WorkspaceAgent received tool call result`);
-				this.toolCallings.get(msgAppend.msg.tool_call_id || '')?.();
+			case LLMSession.Role.Tool: {
+				this.toolCallings.get(event.tool_call?.id || '')?.();
+				break;
 			}
-
-			return;
+			default: {
+				this.logService.warn(`WorkspaceAgent received message with unsupported role: ${event.role}`);
+				break;
+			}
 		}
-
-		if (msgAppend.cnt && msgAppend.cnt.text) {
-			// Get the last message from this.msgs
-			const latestMsg = this.msgs[this.msgs.length - 1];
-			if (latestMsg.msg?.content) {
-				latestMsg.msg.content.text = (latestMsg.msg.content.text || '') + msgAppend.cnt.text;
-			}
-			render.markdown(msgAppend.cnt.text);
-		}
-
-		this.logService.warn(`empty append message received`);
 	}
 }
