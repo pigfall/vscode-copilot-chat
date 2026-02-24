@@ -51,7 +51,6 @@ class WorkspaceAgentRequestHandler {
 	}
 
 	// Handle the vscode chat request. Render the response to chat panel.
-	// It will retrieve the conversation history from context, and send it to agent as the initial conversation.
 	// Then it will keep listening on the stdout of the agent process, and render the message to chat panel once it receives a new message.
 	handle(
 		request: vscode.ChatRequest,
