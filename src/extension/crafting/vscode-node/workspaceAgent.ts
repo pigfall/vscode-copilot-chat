@@ -7,7 +7,7 @@ import { ILogService } from '../../../platform/log/common/logService';
 import * as readline from 'readline';
 import { LLMSession } from '../common/llmSession';
 
-// Registers the WorkspaceAgent as a chat participant in VS Code.
+// Register the WorkspaceAgent as a chat participant in VS Code.
 export class WorkspaceAgentContrib extends Disposable implements IExtensionContribution {
 	static readonly ID = 'crafting.sandbox.workspace';
 	constructor(
@@ -74,11 +74,11 @@ class WorkspaceAgentRequestHandler {
 			// Read the stdout of the agent line by line, and render the message to chat panel once it receives a new message.
 			rl.on('line', (line) => {
 				try {
-					this.logService.debug(`WorkspaceAgent received agent output: ${line}`);
+					this.logService.debug(`received agent's output: ${line}`);
 					const event: LLMSession.Message = JSON.parse(line);
 					this.handleEvent(event, stream);
 				} catch (error) {
-					this.logService.error(`Failed to decode agent's event: ${line}`);
+					this.logService.error(`handle agent's event error: ${error}, ${line}`);
 					child.kill('SIGTERM');
 					reject(error);
 				}
@@ -87,7 +87,7 @@ class WorkspaceAgentRequestHandler {
 			// Read the stderr of the agent, and log it.
 			child.stderr.setEncoding('utf8');
 			child.stderr.on('data', (data) => {
-				this.logService.error(`error from agent's stderr: ${data}`);
+				this.logService.error(`agent's stderr: ${data}`);
 			});
 
 			const cancellationHandler = token.onCancellationRequested(() => {
@@ -96,21 +96,20 @@ class WorkspaceAgentRequestHandler {
 			});
 
 			child.on('error', (error) => {
-				this.logService.error(`WorkspaceAgent error: ${error.message}`);
+				this.logService.error(`agent error: ${error.message}`);
 				cancellationHandler.dispose();
 				reject(error);
 			});
 
 			child.on('close', (code) => {
+				cancellationHandler.dispose();
+				rl.close();
 				this.logService.debug(`agent process exited with code: ${code}`);
 				if (code !== 0) {
 					reject(new Error(`agent process exited with code: ${code}`));
 					return;
 				}
-				cancellationHandler.dispose();
-				// Save the messages to metadata of the chat result, so we could retrieve it in the follow-up conversation.
 				resolve({});
-				rl.close();
 			});
 
 			child.stdin.write(request.prompt);
@@ -126,9 +125,14 @@ class WorkspaceAgentRequestHandler {
 					responseStream.markdown(event.content.text || '');
 				}
 				if (event.tool_call) {
+					// The agent process is handling the tool call request.
+					// We add a ui element to show the tool is invoking.
 					const id = event.tool_call.id;
 					responseStream.progress(event.tool_call.name, async (_progress) => {
 						return new Promise<void>((resolve) => {
+							// Save the promise's resolve to the map.
+							// Resolve it when we receive the event of tool call result.
+							// After the promise is resolved, the chat pannel will show the tool call is finished.
 							this.toolCallings.set(id, () => {
 								resolve();
 							});
@@ -138,6 +142,7 @@ class WorkspaceAgentRequestHandler {
 				break;
 			}
 			case LLMSession.Role.Tool: {
+				// Mark the tool call finished.
 				this.toolCallings.get(event.tool_call?.id || '')?.();
 				break;
 			}
