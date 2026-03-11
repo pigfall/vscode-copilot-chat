@@ -60,7 +60,7 @@ class WorkspaceAgentRequestHandler {
 	): Promise<vscode.ChatResult> {
 		return new Promise<vscode.ChatResult>((resolve, reject) => {
 			this.logService.debug(`WorkspaceAgent received user prompt: ${request.prompt}`);
-			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run', '--resume-if-exist', '--stream-events=json', `--session-dir=/var/log/sandbox/.wsenv/llm-sessions/vscode-copilot`, `--session=${request.sessionId}`], {
+			const child: cp.ChildProcessWithoutNullStreams = cp.spawn('/opt/sandboxd/sbin/wsenv', ['agent', 'run', '--resume-if-exist', '--stream-events=json', `--session-dir=/var/log/sandbox/.wsenv/llm-sessions/vscode-copilot`, `--session=${request.sessionId}`, `--with-sandbox-tools`], {
 				stdio: 'pipe',
 				env: { ...process.env },
 			});
