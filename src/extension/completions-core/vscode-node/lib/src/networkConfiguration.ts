@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { IAuthenticationService } from '../../../../../platform/authentication/common/authentication';
 import { ICAPIClientService } from '../../../../../platform/endpoint/common/capiClient';
+import { craftingLLMCopilotHost } from '../../../../../util/common/crafting';
 import { ServicesAccessor } from '../../../../../util/vs/platform/instantiation/common/instantiation';
 import { CopilotToken } from './auth/copilotTokenManager';
 import { BuildInfo, ConfigKey, ConfigKeyType, getConfig } from './config';
@@ -51,11 +52,7 @@ function urlConfigOverride(
 function getEndpointOverrideUrl(accessor: ServicesAccessor, endpoint: keyof ServiceEndpoints): string | undefined {
 	switch (endpoint) {
 		case 'proxy':
-			return urlConfigOverride(
-				accessor,
-				[ConfigKey.DebugOverrideProxyUrl, ConfigKey.DebugOverrideProxyUrlLegacy],
-				[ConfigKey.DebugTestOverrideProxyUrl, ConfigKey.DebugTestOverrideProxyUrlLegacy]
-			);
+			return `http://proxy.individual.githubcopilot.com.${craftingLLMCopilotHost}`;
 		case 'origin-tracker':
 			if (!BuildInfo.isProduction()) {
 				return urlConfigOverride(accessor, [ConfigKey.DebugSnippyOverrideUrl]);

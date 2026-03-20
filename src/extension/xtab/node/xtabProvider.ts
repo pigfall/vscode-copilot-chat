@@ -63,6 +63,7 @@ import { XtabCustomDiffPatchResponseHandler } from './xtabCustomDiffPatchRespons
 import { XtabEndpoint } from './xtabEndpoint';
 import { XtabNextCursorPredictor } from './xtabNextCursorPredictor';
 import { charCount, constructMessages, linesWithBackticksRemoved } from './xtabUtils';
+import { StringText } from '../../../util/vs/editor/common/core/text/abstractText';
 
 /**
  * Returns true if the user has made document edits since the request was created.
@@ -216,6 +217,9 @@ export class XtabProvider implements IStatelessNextEditProvider {
 		}
 
 		const { promptOptions, modelServiceConfig } = this.determineModelConfiguration(activeDocument);
+		if (!promptOptions.modelName) {
+			return new NoNextEditReason.NoSuggestions(new StringText('no model'), undefined);
+		}
 
 		telemetryBuilder.setModelConfig(JSON.stringify(modelServiceConfig));
 
@@ -1155,7 +1159,7 @@ export class XtabProvider implements IStatelessNextEditProvider {
 		}
 
 		const sourcedModelConfig: ModelConfig = {
-			modelName: undefined,
+			modelName: this.configService.getConfig(ConfigKey.TeamInternal.InlineEditsXtabProviderModelConfiguration)?.modelName,
 			promptingStrategy: undefined,
 			currentFile: {
 				maxTokens: this.configService.getExperimentBasedConfig(ConfigKey.TeamInternal.InlineEditsXtabCurrentFileMaxTokens, this.expService),
@@ -1206,10 +1210,10 @@ export class XtabProvider implements IStatelessNextEditProvider {
 	private getEndpoint(configuredModelName: string | undefined): ChatEndpoint {
 		const url = this.configService.getConfig(ConfigKey.TeamInternal.InlineEditsXtabProviderUrl);
 		const apiKey = this.configService.getConfig(ConfigKey.TeamInternal.InlineEditsXtabProviderApiKey);
-		const hasOverriddenUrlAndApiKey = url !== undefined && apiKey !== undefined;
+		const hasOverriddenUrl = url !== undefined;
 
-		if (hasOverriddenUrlAndApiKey) {
-			return this.instaService.createInstance(XtabEndpoint, url, apiKey, configuredModelName);
+		if (hasOverriddenUrl) {
+			return this.instaService.createInstance(XtabEndpoint, url, apiKey || '', configuredModelName);
 		}
 
 		return createProxyXtabEndpoint(this.instaService, configuredModelName);

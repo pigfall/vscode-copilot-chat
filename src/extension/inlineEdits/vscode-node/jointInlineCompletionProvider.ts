@@ -204,7 +204,7 @@ export class JointCompletionsProviderContribution extends Disposable implements 
 
 				let completionsProvider: CopilotInlineCompletionItemProvider | undefined;
 				{
-					const configEnabled = this._configurationService.getExperimentBasedConfigObservable<boolean>(ConfigKey.TeamInternal.InlineEditsEnableGhCompletionsProvider, this._expService).read(reader);
+					const configEnabled = this._configurationService.getConfig(ConfigKey.FIMCompletionEnabled);
 					const extensionUnification = unificationStateValue?.extensionUnification ?? false;
 
 					// respect excludes if NES is enabled

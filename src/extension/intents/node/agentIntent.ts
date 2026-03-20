@@ -83,7 +83,6 @@ export const getAgentTools = async (accessor: ServicesAccessor, request: vscode.
 		allowTools[ToolName.MultiReplaceString] = learned.includes(ToolName.MultiReplaceString);
 		allowTools[ToolName.ApplyPatch] = learned.includes(ToolName.ApplyPatch);
 	} else {
-		allowTools[ToolName.EditFile] = true;
 		allowTools[ToolName.ReplaceString] = modelSupportsReplaceString(model);
 		allowTools[ToolName.ApplyPatch] = modelSupportsApplyPatch(model) && !!toolsService.getTool(ToolName.ApplyPatch);
 
@@ -100,6 +99,11 @@ export const getAgentTools = async (accessor: ServicesAccessor, request: vscode.
 			allowTools[ToolName.MultiReplaceString] = true;
 		}
 	}
+
+	// The vscode will report error when ToolName.EditFile is called. TODO Attach the error description.
+	// gemini,openai,anthropic all support ToolName.ApplyPatch.
+	allowTools[ToolName.EditFile] = false;
+	allowTools[ToolName.ApplyPatch] = true;
 
 	allowTools[ToolName.CoreRunTest] = await testService.hasAnyTests();
 	allowTools[ToolName.CoreRunTask] = tasksService.getTasks().length > 0;

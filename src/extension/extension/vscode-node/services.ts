@@ -72,9 +72,7 @@ import { ISettingsEditorSearchService } from '../../../platform/settingsEditor/c
 import { IExperimentationService, NullExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
 import { NullTelemetryService } from '../../../platform/telemetry/common/nullTelemetryService';
 import { ITelemetryService, ITelemetryUserConfig, TelemetryUserConfigImpl } from '../../../platform/telemetry/common/telemetry';
-import { APP_INSIGHTS_KEY_ENHANCED, APP_INSIGHTS_KEY_STANDARD } from '../../../platform/telemetry/node/azureInsights';
 import { MicrosoftExperimentationService } from '../../../platform/telemetry/vscode-node/microsoftExperimentationService';
-import { TelemetryService } from '../../../platform/telemetry/vscode-node/telemetryServiceImpl';
 import { IWorkspaceMutationManager } from '../../../platform/testing/common/workspaceMutationManager';
 import { ISetupTestsDetector, SetupTestsDetector } from '../../../platform/testing/node/setupTestDetector';
 import { ITestDepsResolver, TestDepsResolver } from '../../../platform/testing/node/testDepsResolver';
@@ -141,6 +139,8 @@ import { IWorkspaceListenerService } from '../../workspaceRecorder/common/worksp
 import { WorkspacListenerService } from '../../workspaceRecorder/vscode-node/workspaceListenerService';
 import { ISimilarFilesContextService } from '../../xtab/common/similarFilesContextService';
 import { registerServices as registerCommonServices } from '../vscode/services';
+import { ICraftingModelService } from '../../crafting/common/types';
+import { CraftingModelService } from '../../crafting/vscode-node/modelService';
 
 // ###########################################################################################
 // ###                                                                                     ###
@@ -155,6 +155,7 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 
 	registerCommonServices(builder, extensionContext);
 
+	builder.define(ICraftingModelService, new SyncDescriptor(CraftingModelService));
 	builder.define(IAutomodeService, new SyncDescriptor(AutomodeService));
 	builder.define(IConversationStore, new ConversationStore());
 	builder.define(IDiffService, new DiffServiceImpl());
@@ -297,20 +298,7 @@ function setupMSFTExperimentationService(builder: IInstantiationServiceBuilder, 
 }
 
 function setupTelemetry(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext, internalAIKey: string, internalLargeEventAIKey: string, externalAIKey: string) {
-
-	if (ExtensionMode.Production === extensionContext.extensionMode && !isScenarioAutomation) {
-		builder.define(ITelemetryService, new SyncDescriptor(TelemetryService, [
-			extensionContext.extension.packageJSON.name,
-			internalAIKey,
-			internalLargeEventAIKey,
-			externalAIKey,
-			APP_INSIGHTS_KEY_STANDARD,
-			APP_INSIGHTS_KEY_ENHANCED,
-		]));
-	} else {
-		// If we're developing or testing we don't want telemetry to be sent, so we turn it off
-		builder.define(ITelemetryService, new NullTelemetryService());
-	}
+	builder.define(ITelemetryService, new NullTelemetryService());
 
 	setupMSFTExperimentationService(builder, extensionContext);
 }

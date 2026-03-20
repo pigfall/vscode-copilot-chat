@@ -31,6 +31,8 @@ import { InlineEditModel } from './inlineEditModel';
 import { InlineEditLogger } from './parts/inlineEditLogger';
 import { VSCodeWorkspace } from './parts/vscodeWorkspace';
 import { makeSettable } from './utils/observablesUtils';
+import { CraftingModelPurpose, ICraftingModelService } from '../../crafting/common/types';
+import { doUntilSuccess } from '../../../util/common/crafting';
 
 const useEnhancedNotebookNESContextKey = 'github.copilot.chat.enableEnhancedNotebookNES';
 
@@ -46,6 +48,14 @@ export class InlineEditProviderFeatureContribution extends Disposable implements
 		const logger = this._logService.createSubLogger(['NES', 'Feature']);
 
 		const inlineEditProviderFeature = this._instantiationService.createInstance(InlineEditProviderFeature);
+		// The nes completion provider will use InlineEditsXtabProviderModelName as final model name to fetch suggestions.
+		// We watch the configuration and crafting models to keep them in sync.
+		this._register(inlineEditProviderFeature.setModelName());
+		// This is a place to register the NES completion provider.
+		// It will be triggered when:
+		// - The configuration `ConfigKey.NESCompletionEnabled` changes.
+		// - The copilot token has been acquired.
+		// - The crafting models were fetched.
 		this._register(inlineEditProviderFeature.registerProvider());
 		this._register(inlineEditProviderFeature.setContext());
 
@@ -55,6 +65,7 @@ export class InlineEditProviderFeatureContribution extends Disposable implements
 
 export class InlineEditProviderFeature {
 
+	private readonly _craftingModelService = this._instantiationService.invokeFunction(accessor => accessor.get(ICraftingModelService));
 	private readonly _inlineEditsProviderId = makeSettable(this._configurationService.getExperimentBasedConfigObservable(ConfigKey.TeamInternal.InlineEditsProviderId, this._expService));
 
 	private readonly _hideInternalInterface = this._configurationService.getConfigObservable(ConfigKey.TeamInternal.InlineEditsHideInternalInterface);
@@ -62,6 +73,9 @@ export class InlineEditProviderFeature {
 	private readonly _yieldToCopilot = this._configurationService.getExperimentBasedConfigObservable(ConfigKey.TeamInternal.InlineEditsYieldToCopilot, this._expService);
 	private readonly _excludedProviders = this._configurationService.getExperimentBasedConfigObservable(ConfigKey.TeamInternal.InlineEditsExcludedProviders, this._expService).map(v => v ? v.split(',').map(v => v.trim()).filter(v => v !== '') : []);
 	private readonly _copilotToken = observableFromEvent(this, this._authenticationService.onDidAuthenticationChange, () => this._authenticationService.copilotToken);
+	private readonly _purposeModels = observableFromEvent(this, this._craftingModelService.onPurposeModelMapChanged, () => this._craftingModelService.purposeModelMap);
+	private readonly _nesCompletionEnabled = this._configurationService.getConfigObservable(ConfigKey.NESCompletionEnabled);
+	private registered = false;
 
 	public readonly inlineEditsEnabled = derived(this, (reader) => {
 		const copilotToken = this._copilotToken.read(reader);
@@ -71,6 +85,17 @@ export class InlineEditProviderFeature {
 		if (copilotToken.isCompletionsQuotaExceeded) {
 			return false;
 		}
+
+		// Disable if user explicitly disabled NES in vscode settings.
+		if (!this._nesCompletionEnabled.read(reader)) {
+			return false;
+		}
+		// Disable if no NES model is available.
+		const nesModel = this._craftingModelService.getModelByPurpose(CraftingModelPurpose.CodingNES);
+		if (!nesModel) {
+			return false;
+		}
+
 		return true;
 	});
 
@@ -91,7 +116,9 @@ export class InlineEditProviderFeature {
 		@IExperimentationService private readonly _expService: IExperimentationService,
 		@IEnvService private readonly _envService: IEnvService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
+		@ILogService private readonly _logService: ILogService,
 	) {
+		doUntilSuccess(() => this._craftingModelService.getModelByPurpose(CraftingModelPurpose.CodingNES));
 	}
 
 	public setContext(): IDisposable {
@@ -106,11 +133,31 @@ export class InlineEditProviderFeature {
 		});
 	}
 
+	public setModelName(): IDisposable {
+		return autorun((reader) => {
+			const models = this._purposeModels.read(reader);
+			const nesModel = models.get(CraftingModelPurpose.CodingNES);
+			if (!nesModel) {
+				this._configurationService.setConfig(ConfigKey.TeamInternal.InlineEditsXtabProviderModelConfiguration, undefined);
+				return;
+			}
+			this._configurationService.setConfig(
+				ConfigKey.TeamInternal.InlineEditsXtabProviderModelConfiguration,
+				{ modelName: nesModel.id, promptingStrategy: undefined, includeTagsInCurrentFile: false, lintOptions: undefined },
+			);
+		});
+	}
+
 	public registerProvider(): IDisposable {
 		const unificationState = unificationStateObservable(this);
 
 		return autorun(reader => {
 			if (!this.inlineEditsEnabled.read(reader)) { return; }
+
+			if (this.registered) {
+				this._logService.debug('NES Inline Edit Completion Provider is already registered.');
+				return;
+			}
 
 			const logger = reader.store.add(this._instantiationService.createInstance(InlineEditLogger));
 
@@ -169,6 +216,8 @@ export class InlineEditProviderFeature {
 				groupId: 'nes',
 				excludes,
 			}));
+			this._logService.info(`NES Inline Edit Completion Provider registered`);
+			this.registered = true;
 
 			reader.store.add(commands.registerCommand(learnMoreCommandId, () => {
 				this._envService.openExternal(URI.parse(learnMoreLink));

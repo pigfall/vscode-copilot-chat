@@ -157,13 +157,6 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 	}
 
 	private async _registerChatProvider(): Promise<void> {
-		const provider: vscode.LanguageModelChatProvider = {
-			onDidChangeLanguageModelChatInformation: this._onDidChange.event,
-			provideLanguageModelChatInformation: this._provideLanguageModelChatInfo.bind(this),
-			provideLanguageModelChatResponse: this._provideLanguageModelChatResponse.bind(this),
-			provideTokenCount: this._provideTokenCount.bind(this)
-		};
-		this._register(vscode.lm.registerLanguageModelChatProvider('copilot', provider));
 		this._register(this._authenticationService.onDidAuthenticationChange(() => {
 			if (!this._authenticationService.anyGitHubSession) {
 				this._currentModels = [];
@@ -177,6 +170,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		}));
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideLanguageModelChatInfo(options: { silent: boolean }, token: vscode.CancellationToken): Promise<vscode.LanguageModelChatInformation[]> {
 		const session = await this._getToken();
 		if (!session) {
@@ -321,6 +315,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		return this._chatEndpoints.find(e => e.model === ModelAliasRegistry.resolveAlias(model.id));
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideLanguageModelChatResponse(
 		model: vscode.LanguageModelChatInformation,
 		messages: Array<vscode.LanguageModelChatMessage | vscode.LanguageModelChatMessage2>,
@@ -339,6 +334,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		}, options.requestInitiator, progress, token);
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _provideTokenCount(
 		model: vscode.LanguageModelChatInformation,
 		text: string | vscode.LanguageModelChatMessage | vscode.LanguageModelChatMessage2,

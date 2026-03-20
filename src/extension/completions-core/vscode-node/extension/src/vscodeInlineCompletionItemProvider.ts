@@ -16,7 +16,8 @@ import {
 	PartialAcceptInfo,
 	Position,
 	TextDocument,
-	workspace
+	workspace,
+	Command
 } from 'vscode';
 import { ILogger, ILogService, LogTarget } from '../../../../../platform/log/common/logService';
 import { CapturingToken } from '../../../../../platform/requestLogger/common/capturingToken';
@@ -38,7 +39,7 @@ import { CopilotConfigPrefix } from '../../lib/src/constants';
 import { handleException } from '../../lib/src/defaultHandlers';
 import { Logger } from '../../lib/src/logger';
 import { isCompletionEnabledForDocument } from './config';
-import { CopilotCompletionFeedbackTracker, sendCompletionFeedbackCommand } from './copilotCompletionFeedbackTracker';
+import { CopilotCompletionFeedbackTracker } from './copilotCompletionFeedbackTracker';
 import { ICompletionsExtensionStatus } from './extensionStatus';
 import { GhostTextCompletionItem, GhostTextCompletionList, GhostTextProvider } from './ghostText/ghostTextProvider';
 
@@ -186,7 +187,7 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 
 			return {
 				...list,
-				commands: [sendCompletionFeedbackCommand],
+				commands: [...(list.commands ?? []), completionFromFIM]
 			};
 		} catch (e) {
 			this.instantiationService.invokeFunction(exception, e, '._provideInlineCompletionItems', myLogger);
@@ -284,3 +285,9 @@ export class CopilotInlineCompletionItemProvider extends Disposable implements I
 		);
 	}
 }
+
+const completionFromFIM: Command = {
+	command: '',
+	title: 'This completion is from FIM Provider',
+	tooltip: '',
+};

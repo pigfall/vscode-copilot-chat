@@ -29,6 +29,14 @@ export class ToolsService extends BaseToolsService {
 
 	private _connectedModelSpecificTools = false;
 
+	private disabledTools: Map<ToolName, boolean> = new Map(
+		[
+			// Disable codebase tool for now. The codebase tool need to read the remote repo.
+			// We need to login github to get the token.
+			[ToolName.Codebase, true],
+		]
+	);
+
 	override get modelSpecificTools() {
 		this.getModelSpecificTools();
 		return super.modelSpecificTools;
@@ -243,6 +251,9 @@ export class ToolsService extends BaseToolsService {
 
 		return tools
 			.filter(tool => {
+				if (this.disabledTools.has(tool.name as ToolName)) {
+					return false;
+				}
 				// 0. If the tool was a model specific tool with an override, it'll be mixed in in the 'map' later.
 				if (modelSpecificTools.get(tool.name)?.tool.overridesTool) {
 					return false;

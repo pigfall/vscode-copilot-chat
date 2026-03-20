@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { PromptFileContribution } from '../../agents/vscode-node/promptFileContrib';
-import { AuthenticationContrib } from '../../authentication/vscode-node/authentication.contribution';
 import { BYOKContrib } from '../../byok/vscode-node/byokContribution';
 import { ChatDebugFileLoggerContribution } from '../../chat/vscode-node/chatDebugFileLoggerService';
 import { ChatQuotaContribution } from '../../chat/vscode-node/chatQuota.contribution';
@@ -21,6 +20,7 @@ import { FeedbackCommandContribution } from '../../conversation/vscode-node/feed
 import { LanguageModelAccess } from '../../conversation/vscode-node/languageModelAccess';
 import { LogWorkspaceStateContribution } from '../../conversation/vscode-node/logWorkspaceState';
 import { RemoteAgentContribution } from '../../conversation/vscode-node/remoteAgents';
+import { CraftingModelContrib, CraftingWorkspaceAgentContrib } from '../../crafting/vscode-node/contribution';
 import { DiagnosticsContextContribution } from '../../diagnosticsContext/vscode/diagnosticsContextProvider';
 import { LanguageModelProxyContrib } from '../../externalAgents/vscode-node/lmProxyContrib';
 import { WalkthroughCommandContribution } from '../../getting-started/vscode-node/commands';
@@ -70,7 +70,6 @@ export const vscodeNodeContributions: IExtensionContributionFactory[] = [
 	asContributionFactory(ExtensionStateCommandContribution),
 	asContributionFactory(ConversationFeature),
 	workspaceChunkSearchContribution,
-	asContributionFactory(AuthenticationContrib),
 	chatBlockLanguageContribution,
 	asContributionFactory(LoggingActionsContrib),
 	asContributionFactory(FetcherTelemetryContribution),
@@ -131,4 +130,6 @@ export const vscodeNodeChatContributions: IExtensionContributionFactory[] = [
 	asContributionFactory(TrajectoryExportCommands),
 	asContributionFactory(OTelChatDebugLogProviderContribution),
 	asContributionFactory(ChatDebugFileLoggerContribution),
+	asContributionFactory(CraftingModelContrib),
+	asContributionFactory(CraftingWorkspaceAgentContrib),
 ];

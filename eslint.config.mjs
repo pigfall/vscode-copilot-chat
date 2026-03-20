@@ -101,17 +101,7 @@ export default tseslint.config(
 				'context'
 			], // non-complete list of globals that are easy to access unintentionally
 			'no-var': 'error',
-			'semi': 'error',
-			'header/header': [
-				'error',
-				'block',
-				[
-					'---------------------------------------------------------------------------------------------',
-					' *  Copyright (c) Microsoft Corporation. All rights reserved.',
-					' *  Licensed under the MIT License. See License.txt in the project root for license information.',
-					' *--------------------------------------------------------------------------------------------'
-				]
-			]
+			'semi': 'error'
 		},
 		settings: {
 			'import/resolver': {

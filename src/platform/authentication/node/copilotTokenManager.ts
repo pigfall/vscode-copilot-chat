@@ -268,7 +268,7 @@ export abstract class BaseCopilotTokenManager extends Disposable implements ICop
 				Authorization: `token ${githubToken}`,
 				'X-GitHub-Api-Version': '2025-04-01'
 			},
-			retryFallbacks: true,
+			retryFallbacks: false,
 			expectJSON: true,
 		};
 		const response = await this._capiClientService.makeRequest<Response>(options, { type: RequestType.CopilotToken });

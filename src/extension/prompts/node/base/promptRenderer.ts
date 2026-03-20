@@ -8,7 +8,6 @@ import type { ChatResponsePart, ChatResponseProgressPart, LanguageModelToolToken
 import { ChatLocation } from '../../../../platform/chat/common/commonTypes';
 import { toTextPart } from '../../../../platform/chat/common/globalStringUtils';
 import { ConfigKey, IConfigurationService } from '../../../../platform/configuration/common/configurationService';
-import { IEndpointProvider } from '../../../../platform/endpoint/common/endpointProvider';
 import { ILogService } from '../../../../platform/log/common/logService';
 import { IChatEndpoint } from '../../../../platform/networking/common/networking';
 import { IRequestLogger } from '../../../../platform/requestLogger/node/requestLogger';
@@ -25,6 +24,7 @@ import { getUniqueReferences, PromptReference } from '../../../prompt/common/con
 import { IBuildPromptContext } from '../../../prompt/common/intents';
 import { IIntent } from '../../../prompt/node/intents';
 import { PromptElementCtor } from './promptElement';
+import { ICraftingModelService } from '../../../crafting/common/types';
 
 /**
  * Allows us to use dependency injection to pass the fully fledged IChatEndpoint to the prompt element being rendered.
@@ -212,9 +212,11 @@ export async function renderPromptElementJSON<P extends BasePromptElementProps>(
 	// todo@connor4312: we don't know what model the tool call will use, just assume copilot base
 	// todo@lramos15: We should pass in endpoint provider rather than doing invoke function, but this was easier
 	const endpoint = await instantiationService.invokeFunction(async (accessor) => {
-		const endpointProvider = accessor.get(IEndpointProvider);
-		return await endpointProvider.getChatEndpoint('copilot-base');
+		return accessor.get(ICraftingModelService).lastUsedChatEndpoint();
 	});
+	if (!endpoint) {
+		throw (new Error('no chat endpoint available'));
+	}
 	const hydratedInstaService = instantiationService.createChild(new ServiceCollection([IPromptEndpoint, endpoint]));
 	const renderer = new PromptRendererForJSON(ctor as any, props, tokenOptions, endpoint, hydratedInstaService);
 	return await renderer.renderElementJSON(token);

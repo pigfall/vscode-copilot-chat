@@ -52,32 +52,9 @@ export class AuthenticationChatUpgradeService extends Disposable implements IAut
 	async shouldRequestPermissiveSessionUpgrade(): Promise<boolean> {
 		let reason: string = 'true';
 		try {
-			// We don't want to be annoying
-			if (this.hasRequestedPermissiveSessionUpgrade) {
-				reason = 'false - already requested';
-				return false;
-			}
-			// The user does not want to be asked
-			if (this._authenticationService.isMinimalMode) {
-				reason = 'false - minimal mode';
-				return false;
-			}
-			// We already have a permissive session
-			if (await this._authenticationService.getGitHubSession('permissive', { silent: true })) {
-				reason = 'false - already have permissive session';
-				return false;
-			}
-			// The user is not signed in at all
-			if (!(await this._authenticationService.getGitHubSession('any', { silent: true }))) {
-				reason = 'false - not signed in';
-				return false;
-			}
-			// The user has access to all repositories
-			if (await this._canAccessAllRepositories()) {
-				reason = 'false - access to all repositories';
-				return false;
-			}
-			return true;
+			// Never allow session upgrade information.
+			reason = 'false - not support';
+			return false;
 		} finally {
 			this.logService.trace(`Should request permissive session upgrade: ${reason}`);
 		}
@@ -205,6 +182,7 @@ export class AuthenticationChatUpgradeService extends Disposable implements IAut
 		}
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private async _canAccessAllRepositories(): Promise<boolean> {
 		const repoContexts = this.gitService?.repositories;
 		if (!repoContexts) {

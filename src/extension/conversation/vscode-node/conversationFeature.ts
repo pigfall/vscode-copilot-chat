@@ -189,11 +189,6 @@ export class ConversationFeature implements IExtensionContribution {
 	private registerProviders(): IDisposable {
 		const disposables = new DisposableStore();
 		try {
-			const detectionProvider = this.registerParticipantDetectionProvider();
-			if (detectionProvider) {
-				disposables.add(detectionProvider);
-			}
-
 			const searchDisposable = this.registerSearchProvider();
 			if (searchDisposable) {
 				disposables.add(searchDisposable);
@@ -209,6 +204,7 @@ export class ConversationFeature implements IExtensionContribution {
 		return disposables;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private registerParticipantDetectionProvider() {
 		if ('registerChatParticipantDetectionProvider' in vscode.chat) {
 			const provider = this.instantiationService.createInstance(IntentDetector);

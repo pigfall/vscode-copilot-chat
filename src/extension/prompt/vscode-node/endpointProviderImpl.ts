@@ -18,6 +18,7 @@ import { IChatEndpoint, IEmbeddingsEndpoint } from '../../../platform/networking
 import { Emitter, Event } from '../../../util/vs/base/common/event';
 import { Disposable } from '../../../util/vs/base/common/lifecycle';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
+import { ICraftingModelService } from '../../crafting/common/types';
 
 
 export class ProductionEndpointProvider extends Disposable implements IEndpointProvider {
@@ -66,8 +67,14 @@ export class ProductionEndpointProvider extends Disposable implements IEndpointP
 		this._logService.trace(`Resolving chat model`);
 
 		if (typeof requestOrFamilyOrModel === 'string') {
-			const modelMetadata = await this._modelFetcher.getChatModelFromFamily(requestOrFamilyOrModel);
-			return this.getOrCreateChatEndpointInstance(modelMetadata!);
+			const craftingChatEndpoint = this._instantiationService.invokeFunction(accessor => accessor.get(ICraftingModelService).lastUsedChatEndpoint());
+			if (craftingChatEndpoint) {
+				return craftingChatEndpoint;
+			} else {
+				// The family case, resolve the chat model for the passed in family
+				const modelMetadata = await this._modelFetcher.getChatModelFromFamily(requestOrFamilyOrModel);
+				return this.getOrCreateChatEndpointInstance(modelMetadata!);
+			}
 		}
 
 		const model = 'model' in requestOrFamilyOrModel ? requestOrFamilyOrModel.model : requestOrFamilyOrModel;
@@ -77,7 +84,14 @@ export class ProductionEndpointProvider extends Disposable implements IEndpointP
 		}
 
 		if (model.vendor !== 'copilot') {
-			return this._instantiationService.createInstance(ExtensionContributedChatEndpoint, model);
+			const craftingModelService = this._instantiationService.invokeFunction(accessor => accessor.get(ICraftingModelService));
+			const craftingModels = await craftingModelService.getModels();
+			const craftingModel = craftingModels.find(m => m.id === model.id);
+			if (craftingModel) {
+				return craftingModelService.getOrCreateChatEndpoint(craftingModel);
+			} else {
+				return this._instantiationService.createInstance(ExtensionContributedChatEndpoint, model);
+			}
 		}
 
 		if (model.id === AutoChatEndpoint.pseudoModelId) {

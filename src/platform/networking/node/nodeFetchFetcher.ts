@@ -8,6 +8,7 @@ import { Lazy } from '../../../util/vs/base/common/lazy';
 import { IEnvService } from '../../env/common/envService';
 import { ReportFetchEvent } from '../common/fetcherService';
 import { BaseFetchFetcher } from './baseFetchFetcher';
+import { craftingLLMCopilotHost } from '../../../util/common/crafting';
 
 export class NodeFetchFetcher extends BaseFetchFetcher {
 
@@ -34,9 +35,21 @@ export class NodeFetchFetcher extends BaseFetchFetcher {
 	}
 }
 
+// TODO check if the api.github.com is configurable.
+const urlMap = new Map<string, string>();
+urlMap.set('https://api.github.com/', 'http://api.github.com' + '.' + craftingLLMCopilotHost + '/');
+
 function getFetch(): typeof globalThis.fetch {
 	const fetch = (globalThis as any).__vscodePatchedFetch || globalThis.fetch;
 	return function (input: string | URL | globalThis.Request, init?: RequestInit) {
+		if (typeof input === 'string') {
+			for (const [old, n] of urlMap) {
+				if (input.startsWith(old)) {
+					input = n + input.slice(old.length);
+					break;
+				}
+			}
+		}
 		return fetch(input, { dispatcher: agent.value, ...init });
 	};
 }

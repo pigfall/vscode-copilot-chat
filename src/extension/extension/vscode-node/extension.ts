@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { resolve } from '../../../util/vs/base/common/path';
 import { baseActivate } from '../vscode/extension';
@@ -19,6 +20,8 @@ import { registerServices } from './services';
 
 //#region TODO@bpasero this needs cleanup
 import '../../intents/node/allIntents';
+import { CraftingModelService } from '../../crafting/vscode-node/modelService';
+import { OutputChannelName } from '../../../platform/log/vscode/outputChannelLogTarget';
 
 function configureDevPackages() {
 	try {
@@ -32,8 +35,24 @@ function configureDevPackages() {
 }
 //#endregion
 
-export function activate(context: ExtensionContext, forceActivation?: boolean) {
-	return baseActivate({
+export async function activate(context: ExtensionContext, forceActivation?: boolean) {
+	// Do not activate if there is not any model.
+	try {
+		const models = await CraftingModelService.fetchModels();
+		if (models.length === 0) {
+			const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
+			outputChannel.appendLine(`No models are available. Please configure models in your organization's LLM settings.`);
+			vscode.commands.executeCommand('setContext', 'github.copilot-chat.noModel', true);
+			return;
+		}
+	} catch (e) {
+		const outputChannel = vscode.window.createOutputChannel(OutputChannelName);
+		outputChannel.appendLine(`Failed to list models: ${e}`);
+		vscode.commands.executeCommand('setContext', 'github.copilot-chat.listModelError', true);
+		return;
+	}
+
+	return await baseActivate({
 		context,
 		registerServices,
 		contributions: vscodeNodeContributions,

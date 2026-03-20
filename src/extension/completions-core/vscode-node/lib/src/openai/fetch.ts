@@ -17,6 +17,7 @@ import { CancellationToken } from '../../../../../../util/vs/base/common/cancell
 import { StopWatch } from '../../../../../../util/vs/base/common/stopwatch';
 import { generateUuid } from '../../../../../../util/vs/base/common/uuid';
 import { IInstantiationService, ServicesAccessor } from '../../../../../../util/vs/platform/instantiation/common/instantiation';
+import { CraftingModelPurpose, ICraftingModelService } from '../../../../../crafting/common/types';
 import { CancellationToken as ICancellationToken } from '../../../types/src';
 import { CopilotToken, ICompletionsCopilotTokenManager } from '../auth/copilotTokenManager';
 import { onCopilotToken } from '../auth/copilotTokenNotifier';
@@ -69,6 +70,7 @@ type BaseFetchRequest = {
  * API request.
  */
 type CompletionFetchRequestFields = {
+	model?: string;
 	/** The prompt suffix to send to the model. */
 	suffix: string;
 	/** Whether to stream back a response in SSE format. Always true: non streaming requests are not supported by this proxy */
@@ -797,6 +799,17 @@ export class LiveOpenAIFetcher extends OpenAIFetcher {
 			stream: true, // Always true: non streaming requests are not supported by this proxy
 			extra: params.extra,
 		};
+		const modelSvc = this.instantiationService.invokeFunction((accessor) => {
+			return accessor.get(ICraftingModelService);
+		});
+		const fimModel = await modelSvc.getModelByPurpose(CraftingModelPurpose.CodingFIM);
+		if (fimModel) {
+			request.model = fimModel.id;
+		} else {
+			// Do not send the request when we doesn't configure model for fim completion.
+			return 'not-sent';
+		}
+
 
 		if (params.requestLogProbs) {
 			request.logprobs = 2; // Request that logprobs of 2 tokens (i.e. including the best alternative) be returned

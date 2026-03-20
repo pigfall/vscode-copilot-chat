@@ -79,7 +79,6 @@ class ChatAgents implements IDisposable {
 		this._disposables.add(this.registerEditsAgent());
 		this._disposables.add(this.registerNotebookEditorDefaultAgent());
 		this._disposables.add(this.registerNotebookDefaultAgent());
-		this._disposables.add(this.registerVSCodeAgent());
 		this._disposables.add(this.registerTerminalAgent());
 		this._disposables.add(this.registerTerminalPanelAgent());
 	}
@@ -100,6 +99,7 @@ class ChatAgents implements IDisposable {
 		return agent;
 	}
 
+	// @ts-ignore: Variable is reserved for future use
 	private registerVSCodeAgent(): IDisposable {
 		const useInsidersIcon = vscode.env.appName.includes('Insiders') || vscode.env.appName.includes('OSS');
 		const vscodeAgent = this.createAgent(vscodeAgentName, Intent.VSCode);
@@ -228,7 +228,6 @@ Learn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-c
 
 	private async switchToBaseModel(request: vscode.ChatRequest, stream: vscode.ChatResponseStream): Promise<ChatRequest> {
 		const endpoint = await this.endpointProvider.getChatEndpoint(request);
-		const baseEndpoint = await this.endpointProvider.getChatEndpoint('copilot-base');
 		// If it has a 0x multipler, it's free so don't switch them. If it's BYOK, it's free so don't switch them.
 		if (endpoint.multiplier === 0 || request.model.vendor !== 'copilot' || endpoint.multiplier === undefined) {
 			return request;
@@ -236,6 +235,7 @@ Learn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-c
 		if (this._chatQuotaService.overagesEnabled || !this._chatQuotaService.quotaExhausted) {
 			return request;
 		}
+		const baseEndpoint = await this.endpointProvider.getChatEndpoint('copilot-base');
 		const baseLmModel = (await vscode.lm.selectChatModels({ id: baseEndpoint.model, family: baseEndpoint.family, vendor: 'copilot' }))[0];
 		if (!baseLmModel) {
 			return request;

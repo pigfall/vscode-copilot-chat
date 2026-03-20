@@ -1244,6 +1244,17 @@
 		],
 		"chatParticipants": [
 			{
+				"id": "crafting.sandbox.workspace",
+				"name": "CraftingSandboxWorkspace",
+				"fullName": "Crafting Sandbox Workspace",
+				"locations": [
+					"panel"
+				],
+				"modes": [
+					"agent"
+				]
+			},
+			{
 				"id": "github.copilot.default",
 				"name": "GitHubCopilot",
 				"fullName": "GitHub Copilot",
@@ -1600,43 +1611,6 @@
 					{
 						"name": "explain",
 						"description": "%copilot.workspace.explain.description%"
-					}
-				]
-			},
-			{
-				"id": "github.copilot.vscode",
-				"name": "vscode",
-				"fullName": "VS Code",
-				"description": "%copilot.vscode.description%",
-				"when": "!github.copilot.interactiveSession.disabled",
-				"sampleRequest": "%copilot.vscode.sampleRequest%",
-				"locations": [
-					"panel"
-				],
-				"disambiguation": [
-					{
-						"category": "vscode_configuration_questions",
-						"description": "The user wants to learn about, use, or configure the Visual Studio Code. Use this category if the users question is specifically about commands, settings, keybindings, extensions and other features available in Visual Studio Code. Do not use this category to answer questions about generating code or creating new projects including Visual Studio Code extensions.",
-						"examples": [
-							"Switch to light mode.",
-							"Keyboard shortcut to toggle terminal visibility.",
-							"Settings to enable minimap.",
-							"Whats new in the latest release?"
-						]
-					},
-					{
-						"category": "configure_python_environment",
-						"description": "The user wants to set up their Python environment.",
-						"examples": [
-							"Create a virtual environment for my project."
-						]
-					}
-				],
-				"commands": [
-					{
-						"name": "search",
-						"description": "%copilot.vscode.search.description%",
-						"sampleRequest": "%copilot.vscode.search.sampleRequest%"
 					}
 				]
 			},
@@ -2025,6 +1999,11 @@
 						}
 					}
 				}
+			},
+			{
+				"vendor": "crafting",
+				"displayName": "Crafting",
+				"managementCommand": "github.copilot.chat.manageBYOK"
 			}
 		],
 		"interactiveSession": [
@@ -2049,6 +2028,18 @@
 			}
 		],
 		"chatViewsWelcome": [
+			{
+				"icon": "$(copilot-large)",
+				"title": "Ask Copilot",
+				"content": "%github.copilot.viewsWelcome.noModel%",
+				"when": "github.copilot-chat.noModel"
+			},
+			{
+				"icon": "$(copilot-large)",
+				"title": "Ask Copilot",
+				"content": "%github.copilot.viewsWelcome.listModelError%",
+				"when": "github.copilot-chat.listModelError"
+			},
 			{
 				"icon": "$(chat-sparkle)",
 				"title": "%copilot.title%",
@@ -2847,6 +2838,28 @@
 				"title": "GitHub Copilot Chat",
 				"id": "stable",
 				"properties": {
+					"github.copilot.chat.fimcompletion.enabled": {
+						"type": "boolean",
+						"default": true,
+						"description": "Controls if enable the FIM completion"
+					},
+					"github.copilot.chat.nescompletion.enabled": {
+						"type": "boolean",
+						"default": true,
+						"description": "Controls if enable the NES completion"
+					},
+					"github.copilot.chat.advanced.inlineEdits.fimcompletion.model": {
+						"type": "string",
+						"description": "Set FIM completion model. The value could be model id in format `provider:model_name` or the model alias. Example: `openai:gpt-3.5-turbo-instruct`, `alias_example`. If the model does not exist in the org, the extension will auto select one"
+					},
+					"github.copilot.chat.advanced.inlineEdits.nescompletion.model": {
+						"type": "string",
+						"description": "Set next edit suggestion completion model.  The value could be model id in format `provider:model_name` or the model alias. Example: `openai:gpt-4.1`. If the model does not exist in the org, the extension will auto select one"
+					},
+					"github.copilot.chat.advanced.inlineEdits.xtabProvider.modelName": {
+						"type": "string",
+						"description": "This is auto configed by the extension, user should not config this manually"
+					},
 					"github.copilot.chat.backgroundAgent.enabled": {
 						"type": "boolean",
 						"default": true,
@@ -2935,16 +2948,6 @@
 						"type": "boolean",
 						"default": true,
 						"markdownDescription": "%github.copilot.config.useProjectTemplates%"
-					},
-					"github.copilot.nextEditSuggestions.enabled": {
-						"type": "boolean",
-						"default": true,
-						"tags": [
-							"nextEditSuggestions",
-							"onExp"
-						],
-						"markdownDescription": "%github.copilot.nextEditSuggestions.enabled%",
-						"scope": "language-overridable"
 					},
 					"github.copilot.nextEditSuggestions.extendedRange": {
 						"type": "boolean",
