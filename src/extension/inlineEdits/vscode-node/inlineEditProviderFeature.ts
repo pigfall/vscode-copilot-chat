@@ -144,6 +144,13 @@ export class InlineEditProviderFeature {
 			this._configurationService.setConfig(
 				ConfigKey.TeamInternal.InlineEditsXtabProviderModelConfiguration,
 				{ modelName: nesModel.id, promptingStrategy: undefined, includeTagsInCurrentFile: false, lintOptions: undefined },
+			).then(
+				() => {
+					this._logService.info(`set xtab model as: ${nesModel.id}`);
+				},
+				(e) => {
+					this._logService.error(`set xtab model as ${nesModel.id} error: ${e}`);
+				}
 			);
 		});
 	}

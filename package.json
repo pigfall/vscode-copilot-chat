@@ -2856,8 +2856,8 @@
 						"type": "string",
 						"description": "Set next edit suggestion completion model.  The value could be model id in format `provider:model_name` or the model alias. Example: `openai:gpt-4.1`. If the model does not exist in the org, the extension will auto select one"
 					},
-					"github.copilot.chat.advanced.inlineEdits.xtabProvider.modelName": {
-						"type": "string",
+					"github.copilot.chat.advanced.inlineEdits.xtabProvider.modelConfiguration":{
+						"type":"object",
 						"description": "This is auto configed by the extension, user should not config this manually"
 					},
 					"github.copilot.chat.backgroundAgent.enabled": {
