@@ -203,10 +203,16 @@ export class ModelMetadataFetcher extends Disposable implements IModelMetadataFe
 	}
 
 	private _shouldRefreshModels(): boolean {
-		if (this._familyMap.size === 0) {
-			// Always refresh if we have no models as this means the last fetch failed in some way
+		// Becuase our mocked api will return empty models, so do not use model size to determine whether we should refresh models or not.
+		//if (this._familyMap.size === 0) {
+		//	// Always refresh if we have no models as this means the last fetch failed in some way
+		//	return true;
+		//}
+
+		if (this._lastFetchError) {
 			return true;
 		}
+
 		const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
 		const now = Date.now();
 

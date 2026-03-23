@@ -167,7 +167,11 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 		const resp = await fetch(`http://${craftingLLMAPIHost}/models?extra=y`);
 		if (!resp.ok) {
 			const content = await resp.text();
-			throw new Error(`fetch models failed: ${resp.status}, ${content}`);
+			let errorMessage = `fetch models failed: ${resp.status}`;
+			if (content && content.trim().length > 0) {
+				errorMessage += `, ${content}`;
+			}
+			throw new Error(errorMessage);
 		}
 		const data = await resp.json() as ListCraftingModelResponse;
 		return data.data;
