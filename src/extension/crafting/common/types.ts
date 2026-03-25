@@ -32,6 +32,7 @@ export interface CraftingModel {
 		};
 		properties?: {
 			context_window_limit?: number;
+			max_output_token?: number;
 		};
 		aliases?: string[];
 		purposes?: string[];

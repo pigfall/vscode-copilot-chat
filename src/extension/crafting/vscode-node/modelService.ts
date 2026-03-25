@@ -190,8 +190,7 @@ export class CraftingModelService extends Disposable implements ICraftingModelSe
 	}
 
 	maxOutputTokens(model: CraftingModel): number {
-		// TODO adjust according to model.
-		return 200000;
+		return model?.extra?.properties?.max_output_token ?? 200000;
 	}
 	maxInputTokens(model: CraftingModel): number {
 		return model?.extra?.properties?.context_window_limit ?? 200000;
